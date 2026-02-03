@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultra 2048</title>
+    <style>
+        :root {
+            /* PALETA FRIA (CRYO) */
+            --bg-color: #e3f1f0;       /* Cinza azulado claro */
+            --grid-bg: #263238;        /* Azul petróleo escuro */
+            --empty-tile: #546e7a;     /* Azul acinzentado */
+            --text-dark: #263238;
+            --text-light: #e0f7fa;
+            
+            /* UI Hacker */
+            --sidebar-bg: #212121;
+            --screen-bg: #000;
+            --screen-text: #00e5ff;    /* Ciano Neon */
+            --keypad-btn: #37474f;
+            --keypad-btn-hover: #455a64;
+            --powerup-active: #00c853; /* Verde Neon */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            user-select: none;
+        }
+
+        /* LAYOUT */
+        .game-wrapper {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            padding: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .game-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 { margin: 0 0 5px 0; font-size: 36px; color: #263238; font-weight: 800; letter-spacing: -1px; }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 550px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .score-container {
+            background: #37474f;
+            padding: 5px 20px;
+            border-radius: 4px;
+            color: #fff;
+            font-weight: bold;
+            text-align: center;
+            min-width: 90px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .score-title { font-size: 10px; text-transform: uppercase; display: block; color: #80deea;}
+
+        button {
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            transition: all 0.2s;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.3);
+        }
+        button:active { transform: translateY(3px); box-shadow: none; }
+        .btn-restart { background: #455a64; }
+        .btn-restart:hover { background: #546e7a; }
+
+        /* MENSAGEM DE STATUS */
+        #status-msg {
+            height: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #006064;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        /* A GRADE 8x8 */
+        #grid-container {
+            width: 85vmin;
+            height: 85vmin;
+            max-width: 550px;
+            max-height: 550px;
+            background-color: var(--grid-bg);
+            border-radius: 8px;
+            padding: 8px;
+            display: grid;
+            /* 8 Colunas e 8 Linhas */
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 4px;
+            box-sizing: border-box;
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .tile {
+            background-color: var(--empty-tile);
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: var(--text-dark);
+            transition: transform 0.1s ease, background 0.15s ease;
+            cursor: pointer;
+            box-shadow: 0 2px 2px rgba(0,0,0,0.2);
+        }
+
+        /* Efeito de Seleção (Swap) */
+        .tile.selected {
+            border: 2px solid #00e5ff;
+            box-shadow: 0 0 15px #00e5ff;
+            z-index: 10;
+            transform: scale(0.95) !important;
+        }
+
+        /* --- PALETA FRIA (CORES DOS TILES) --- */
+        /* Iniciais: Cianos Claros */
+        .tile[data-val="2"]    { background: #e0f7fa; color: #263238; }
+        .tile[data-val="4"]    { background: #b2ebf2; color: #263238; }
+        /* Intermediários: Azuis Céu */
+        .tile[data-val="8"]    { background: #80deea; color: #263238; }
+        .tile[data-val="16"]   { background: #4dd0e1; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .tile[data-val="32"]   { background: #26c6da; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .tile[data-val="64"]   { background: #00bcd4; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        /* Avançados: Azuis Reais e Indigo */
+        .tile[data-val="128"]  { background: #039be5; color: #fff; font-size: 24px; }
+        .tile[data-val="256"]  { background: #0288d1; color: #fff; font-size: 24px; }
+        .tile[data-val="512"]  { background: #0277bd; color: #fff; font-size: 24px; box-shadow: 0 0 10px rgba(2, 119, 189, 0.6); }
+        /* Elite: Roxos e Violetas */
+        .tile[data-val="1024"] { background: #3949ab; color: #fff; font-size: 20px; box-shadow: 0 0 15px rgba(57, 73, 171, 0.6); }
+        .tile[data-val="2048"] { background: #5e35b1; color: #fff; font-size: 20px; box-shadow: 0 0 15px rgba(94, 53, 177, 0.7); }
+        /* God Tier: Magentas e Escuros */
+        .tile[data-val="4096"] { background: #8e24aa; color: #fff; font-size: 18px; }
+        .tile[data-val="8192"] { background: #ad1457; color: #fff; font-size: 18px; }
+        
+        .tile.high-tier { 
+            background: #000; 
+            color: #00e5ff; 
+            font-size: 12px; 
+            border: 1px solid #00e5ff;
+            box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.3);
+            text-shadow: 0 0 5px #00e5ff;
+        }
+
+        /* --- SIDEBAR / PAINEL DE CONTROLE --- */
+        .sidebar {
+            background: var(--sidebar-bg);
+            width: 240px;
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.4);
+            border-top: 3px solid #37474f;
+        }
+
+        /* Tela Hacker */
+        .security-screen {
+            background: var(--screen-bg);
+            color: var(--screen-text);
+            font-family: "Courier New", monospace;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: right;
+            font-size: 18px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            border: 1px solid #444;
+            box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.1);
+            letter-spacing: 2px;
+        }
+
+        /* Teclado 3x3 */
+        .keypad-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+
+        .key-btn {
+            background: var(--keypad-btn);
+            color: #cfd8dc;
+            font-size: 18px;
+            padding: 15px 0;
+            border-radius: 4px;
+            text-align: center;
+            font-family: monospace;
+            transition: background 0.1s;
+        }
+        .key-btn:hover { background: var(--keypad-btn-hover); }
+        .key-btn:active { background: #00bcd4; color: #000; }
+
+        /* Barra Inferior (0 e Enter) */
+        .bottom-bar { display: flex; gap: 6px; }
+        .btn-zero { flex: 1; background: var(--keypad-btn); }
+        .btn-enter { 
+            flex: 2; 
+            background: #b71c1c; /* Vermelho fechado */
+            font-size: 14px; 
+            font-weight: bold;
+            color: #fff;
+        }
+
+        /* PAINEL DESBLOQUEADO (God Panel) */
+        #god-panel {
+            display: none; /* Escondido por padrão */
+            flex-direction: column;
+            gap: 12px;
+            background: #263238;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #00e5ff;
+            animation: slideDown 0.5s;
+        }
+
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .god-label { color: #80deea; font-size: 12px; margin-bottom: 2px; text-transform: uppercase;}
+        
+        select {
+            width: 100%;
+            padding: 8px;
+            background: #37474f;
+            border: 1px solid #546e7a;
+            color: #fff;
+            border-radius: 3px;
+        }
+
+        /* Toggle Button para Swap */
+        .swap-toggle {
+            background: #455a64;
+            width: 100%;
+            text-align: left;
+            position: relative;
+            padding-left: 40px;
+        }
+        .swap-toggle::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #cfd8dc;
+            box-shadow: 0 0 5px #cfd8dc;
+        }
+        
+        .swap-toggle.active { background: #2e3b40; border: 1px solid #00c853; color: #00c853;}
+        .swap-toggle.active::before { background: #00c853; box-shadow: 0 0 8px #00c853; }
+
+    </style>
+</head>
+<body>
+
+<div class="game-wrapper">
+    <div class="game-column">
+        <div class="header">
+            <div>
+                <h1>Ultra 2048</h1>
+                <div style="font-size: 12px; color: #546e7a;">Grid 8x8 | Meta: 2^21</div>
+                <div style="font-size: 12px; color: #546e7a;">Feito para relaxar, se divertir e não se estressar</div>
+            </div>
+            <div class="score-container">
+                <span class="score-title">Score</span>
+                <span id="score">0</span>
+            </div>
+        </div>
+
+        <div id="status-msg"></div>
+
+        <div id="grid-container"></div>
+        
+        <div style="margin-top: 15px;">
+            <button class="btn-restart" onclick="initGame()">Reiniciar Jogo</button>
+            <p>Senhas podem ser comuns, tendo 11 dígitos e o menor deles se repete uma vez</p>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <div id="security-panel">
+            <div class="security-screen" id="display-screen">LOCKED</div>
+            
+            <div class="keypad-grid" style="margin-top: 10px;">
+                <button class="key-btn" onclick="pressKey('1')">1</button>
+                <button class="key-btn" onclick="pressKey('2')">2</button>
+                <button class="key-btn" onclick="pressKey('3')">3</button>
+                <button class="key-btn" onclick="pressKey('4')">4</button>
+                <button class="key-btn" onclick="pressKey('5')">5</button>
+                <button class="key-btn" onclick="pressKey('6')">6</button>
+                <button class="key-btn" onclick="pressKey('7')">7</button>
+                <button class="key-btn" onclick="pressKey('8')">8</button>
+                <button class="key-btn" onclick="pressKey('9')">9</button>
+            </div>
+            
+            <div class="bottom-bar" style="margin-top: 6px;">
+                <button class="key-btn btn-zero" onclick="pressKey('0')">0</button>
+                <button class="key-btn btn-enter" id="btn-enter" onclick="checkPassword()">ENTER</button>
+            </div>
+        </div>
+
+        <div id="god-panel">
+            <div style="text-align: center; color: #00e5ff; font-weight: bold; border-bottom: 1px solid #00e5ff; padding-bottom:5px;">SYSTEM OVERRIDE</div>
+            
+            <div>
+                <div class="god-label">Gerar Matéria</div>
+                <select id="god-select" onchange="enableGodPlacement()">
+                    <option value="0">-- Selecione Valor --</option>
+                    <option value="0">Deletar Peça (0)</option>
+                    </select>
+            </div>
+
+            <div>
+                <div class="god-label">Manipular Espaço</div>
+                <button id="btn-swap-toggle" class="swap-toggle" onclick="toggleSwapMode()">Ativar Troca (Swap)</button>
+            </div>
+
+            <div style="font-size: 10px; color: #b0bec5; text-align: center; margin-top:5px;" id="god-instruction">
+                Painel Ativo.
+            </div>
+
+            <button style="background: #b71c1c; font-size: 10px; padding: 5px;" onclick="lockGodMode()">BLOQUEAR SISTEMA</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- CONFIGURAÇÃO 8x8 ---
+    const gridSize = 8;
+    let board = [];
+    let score = 0;
+    
+    // Estados do Jogo
+    let isSwapMode = false;
+    let swapSelection = null;
+    
+    let isGodModeUnlocked = false;
+    let godPlacementValue = 0; 
+
+    // Segurança
+    let inputBuffer = "";
+    const SECRET_CODE = "12345678900";
+
+    function initGame() {
+        board = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
+        score = 0;
+        resetModes();
+        addNewTile();
+        addNewTile();
+        drawBoard();
+        updateScore();
+        document.getElementById('status-msg').innerText = "";
+    }
+
+    function resetModes() {
+        isSwapMode = false;
+        swapSelection = null;
+        updateSwapUI();
+        
+        godPlacementValue = 0;
+        if(isGodModeUnlocked) {
+            document.getElementById('god-select').value = "0";
+            document.getElementById('god-instruction').innerText = "Sistema Aguardando...";
+        }
+    }
+
+    // --- TECLADO E SENHA ---
+    function pressKey(key) {
+        if(isGodModeUnlocked) return; 
+        if (inputBuffer.length < 15) {
+            inputBuffer += key;
+            updateDisplay();
+        }
+    }
+
+    function updateDisplay() {
+        const screen = document.getElementById('display-screen');
+        screen.innerText = inputBuffer.length > 0 ? "•".repeat(inputBuffer.length) : "LOCKED";
+        screen.style.color = inputBuffer.length > 0 ? "#fff" : "#00e5ff";
+    }
+
+    function checkPassword() {
+        if(isGodModeUnlocked) return;
+
+        const screen = document.getElementById('display-screen');
+        const enterBtn = document.getElementById('btn-enter');
+
+        if (inputBuffer === SECRET_CODE) {
+            screen.innerText = "UNLOCKED";
+            screen.style.color = "#00c853"; // Verde sucesso
+            enterBtn.style.background = "#00c853";
+            
+            setTimeout(() => {
+                unlockGodMode();
+            }, 600);
+        } else {
+            screen.innerText = "DENIED";
+            screen.style.color = "#ff1744"; // Vermelho erro
+            inputBuffer = "";
+            setTimeout(() => { updateDisplay(); }, 1000);
+        }
+    }
+
+    function unlockGodMode() {
+        isGodModeUnlocked = true;
+        document.getElementById('security-panel').style.display = 'none';
+        document.getElementById('god-panel').style.display = 'flex';
+        
+        // Popula Select
+        const select = document.getElementById('god-select');
+        // Mantém as 2 primeiras opções estáticas
+        while(select.options.length > 2) { select.remove(2); }
+        
+        for(let i=1; i<=21; i++) {
+            let val = Math.pow(2, i);
+            let opt = document.createElement('option');
+            opt.value = val;
+            opt.innerText = val.toLocaleString();
+            select.appendChild(opt);
+        }
+    }
+
+    function lockGodMode() {
+        isGodModeUnlocked = false;
+        inputBuffer = "";
+        document.getElementById('security-panel').style.display = 'block';
+        document.getElementById('god-panel').style.display = 'none';
+        document.getElementById('btn-enter').style.background = "#b71c1c";
+        updateDisplay();
+        resetModes();
+    }
+
+    // --- FUNÇÕES DO PAINEL HACKER ---
+
+    // 1. GOD MODE (SPAWN)
+    function enableGodPlacement() {
+        // Desativa swap se estiver ligado
+        if(isSwapMode) toggleSwapMode();
+
+        const val = parseInt(document.getElementById('god-select').value);
+        godPlacementValue = val;
+        const msg = document.getElementById('god-instruction');
+        const status = document.getElementById('status-msg');
+        
+        if (val > 0) {
+            msg.innerText = `Pronto para injetar ${val}.`;
+            status.innerText = `MODO CRIAÇÃO: Clique para adicionar ${val}`;
+        } else if (val === 0 && document.getElementById('god-select').selectedIndex > 0) {
+             msg.innerText = `Pronto para deletar.`;
+             status.innerText = `MODO APAGAR: Clique para remover peça`;
+        } else {
+            msg.innerText = "Aguardando comando...";
+            status.innerText = "";
+        }
+    }
+
+    // 2. SWAP MODE (TROCA)
+    function toggleSwapMode() {
+        // Reseta God Mode Spawn se estiver ativo
+        if(godPlacementValue !== 0) {
+            document.getElementById('god-select').value = "0";
+            godPlacementValue = 0;
+        }
+
+        isSwapMode = !isSwapMode;
+        swapSelection = null;
+        updateSwapUI();
+        drawBoard();
+    }
+
+    function updateSwapUI() {
+        const btn = document.getElementById('btn-swap-toggle');
+        const status = document.getElementById('status-msg');
+        const instr = document.getElementById('god-instruction');
+
+        if(isSwapMode) {
+            btn.classList.add('active');
+            btn.innerHTML = "Troca Ativada (ON)";
+            status.innerText = "MODO TROCA: Clique na peça 1 e depois na peça 2";
+            instr.innerText = "Selecione duas peças no grid.";
+        } else {
+            btn.classList.remove('active');
+            btn.innerHTML = "Ativar Troca (Swap)";
+            if(godPlacementValue === 0) status.innerText = "";
+            instr.innerText = "Sistema Aguardando...";
+        }
+    }
+
+    // --- INTERAÇÃO COM O TABULEIRO ---
+    function handleTileClick(r, c) {
+        if(!isGodModeUnlocked) return; // Nada acontece se não tiver hackeado
+
+        // AÇÃO 1: CRIAR/DELETAR PEÇA
+        if (godPlacementValue !== 0 || (document.getElementById('god-select').selectedIndex === 1)) {
+            // Se for opção "Deletar" (index 1), valor é 0. Se for criar, valor > 0
+            board[r][c] = godPlacementValue;
+            drawBoard();
+            return;
+        }
+
+        // AÇÃO 2: TROCAR PEÇA
+        if (isSwapMode) {
+            if (!swapSelection) {
+                swapSelection = {r, c};
+                drawBoard(); // Mostra seleção
+            } else {
+                // Troca valores
+                let val1 = board[swapSelection.r][swapSelection.c];
+                let val2 = board[r][c];
+                board[swapSelection.r][swapSelection.c] = val2;
+                board[r][c] = val1;
+                
+                swapSelection = null;
+                drawBoard();
+                document.getElementById('status-msg').innerText = "Troca realizada.";
+            }
+        }
+    }
+
+    // --- ENGINE GRÁFICA ---
+    function drawBoard() {
+        const container = document.getElementById('grid-container');
+        container.innerHTML = '';
+        
+        for(let r=0; r<gridSize; r++){
+            for(let c=0; c<gridSize; c++){
+                let val = board[r][c];
+                let tile = document.createElement('div');
+                tile.classList.add('tile');
+                
+                if (val > 0) {
+                    tile.innerText = val;
+                    if(val > 10000) tile.classList.add('high-tier');
+                    else tile.setAttribute('data-val', val);
+
+                    // Ajuste de fonte para 8x8
+                    if (val > 999999) tile.style.fontSize = "10px";
+                    else if (val > 9999) tile.style.fontSize = "14px";
+                    else tile.style.fontSize = "18px";
+                }
+
+                if (swapSelection && swapSelection.r === r && swapSelection.c === c) {
+                    tile.classList.add('selected');
+                }
+
+                // Só adiciona evento de clique se o painel estiver desbloqueado
+                if(isGodModeUnlocked) {
+                    tile.onclick = () => handleTileClick(r, c);
+                    tile.style.cursor = "crosshair";
+                } else {
+                    tile.style.cursor = "default";
+                }
+
+                container.appendChild(tile);
+            }
+        }
+    }
+
+    function updateScore() { document.getElementById('score').innerText = score; }
+
+    // --- LÓGICA 2048 ---
+    function slide(row) {
+        let arr = row.filter(val => val);
+        let missing = gridSize - arr.length;
+        let zeros = Array(missing).fill(0);
+        return arr.concat(zeros);
+    }
+    function combine(row) {
+        for (let i = 0; i < gridSize - 1; i++) {
+            if (row[i] !== 0 && row[i] === row[i + 1]) {
+                row[i] *= 2; row[i + 1] = 0; score += row[i];
+            }
+        }
+        return row;
+    }
+    function moveLeft() {
+        let moved = false;
+        for (let r = 0; r < gridSize; r++) {
+            let original = [...board[r]];
+            let row = slide(board[r]);
+            row = combine(row);
+            row = slide(row);
+            board[r] = row;
+            if(JSON.stringify(original) !== JSON.stringify(board[r])) moved = true;
+        }
+        return moved;
+    }
+    function rotateBoard() {
+        let newBoard = board[0].map((val, index) => board.map(row => row[index]).reverse());
+        board = newBoard;
+    }
+    function rotateBoardBack() {
+        let newBoard = board[0].map((val, index) => board.map(row => row[row.length-1-index]));
+        board = newBoard;
+    }
+
+    function control(e) {
+        // Bloqueia setas se estiver no modo SWAP para evitar conflito visual
+        if(isSwapMode) return;
+
+        if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.code) > -1) e.preventDefault();
+
+        let moved = false;
+        if (e.key === 'ArrowLeft') moved = moveLeft();
+        else if (e.key === 'ArrowRight') { rotateBoard(); rotateBoard(); moved = moveLeft(); rotateBoard(); rotateBoard(); } 
+        else if (e.key === 'ArrowUp') { rotateBoardBack(); moved = moveLeft(); rotateBoard(); } 
+        else if (e.key === 'ArrowDown') { rotateBoard(); moved = moveLeft(); rotateBoardBack(); }
+
+        if (moved) {
+            addNewTile();
+            setTimeout(() => { drawBoard(); updateScore(); }, 10);
+        }
+    }
+    
+    function addNewTile() {
+        let emptyTiles = [];
+        for(let r=0; r<gridSize; r++){
+            for(let c=0; c<gridSize; c++){
+                if(board[r][c] === 0) emptyTiles.push({r, c});
+            }
+        }
+        if(emptyTiles.length > 0){
+            let rand = emptyTiles[Math.floor(Math.random() * emptyTiles.length)];
+            board[rand.r][rand.c] = Math.random() < 0.9 ? 2 : 4;
+        }
+    }
+
+    document.addEventListener('keydown', control);
+    initGame();
+
+</script>
+</body>
+</html>
