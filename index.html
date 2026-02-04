@@ -3,23 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultra 2048</title>
+    <link rel="shortcut icon" href="Gemini_Generated_Image_r2nga0r2nga0r2ng-removebg-preview.png" type="image/x-icon">
+    <title>Ultra 2048 - Safe Smooth</title>
     <style>
         :root {
             /* PALETA FRIA (CRYO) */
-            --bg-color: #e3f1f0;       /* Cinza azulado claro */
-            --grid-bg: #263238;        /* Azul petróleo escuro */
-            --empty-tile: #546e7a;     /* Azul acinzentado */
+            --bg-color: #e3f1f0;
+            --grid-bg: #263238;
+            --empty-tile: #546e7a;
             --text-dark: #263238;
             --text-light: #e0f7fa;
             
             /* UI Hacker */
             --sidebar-bg: #212121;
             --screen-bg: #000;
-            --screen-text: #00e5ff;    /* Ciano Neon */
+            --screen-text: #00e5ff;
             --keypad-btn: #37474f;
             --keypad-btn-hover: #455a64;
-            --powerup-active: #00c853; /* Verde Neon */
+            --powerup-active: #00c853;
         }
 
         body {
@@ -89,7 +90,6 @@
         .btn-restart { background: #455a64; }
         .btn-restart:hover { background: #546e7a; }
 
-        /* MENSAGEM DE STATUS */
         #status-msg {
             height: 20px;
             font-size: 14px;
@@ -109,7 +109,6 @@
             border-radius: 8px;
             padding: 8px;
             display: grid;
-            /* 8 Colunas e 8 Linhas */
             grid-template-columns: repeat(8, 1fr);
             grid-template-rows: repeat(8, 1fr);
             gap: 4px;
@@ -118,166 +117,133 @@
             box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
         }
 
-        .tile {
+        /* Camada de fundo */
+        .grid-bg-layer {
+            position: absolute;
+            top: 8px; left: 8px; right: 8px; bottom: 8px;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 4px;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .grid-slot {
             background-color: var(--empty-tile);
+            border-radius: 4px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .tile {
+            /* Layout via Grid (Seguro) */
+            grid-row-start: var(--row);
+            grid-column-start: var(--col);
+            grid-row-end: span 1;
+            grid-column-end: span 1;
+            
             border-radius: 4px;
             display: flex;
             justify-content: center;
             align-items: center;
             font-weight: bold;
             color: var(--text-dark);
-            transition: transform 0.1s ease, background 0.15s ease;
             cursor: pointer;
             box-shadow: 0 2px 2px rgba(0,0,0,0.2);
+            z-index: 5;
+            
+            /* Apenas transform e opacity são animados para garantir performance */
+            will-change: transform;
+            /* Animação de criação */
+            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
         }
 
-        /* Efeito de Seleção (Swap) */
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .tile.merged {
+            animation: pulse 0.2s ease-in-out;
+            z-index: 10;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); box-shadow: 0 0 10px #00e5ff; }
+            100% { transform: scale(1); }
+        }
+
         .tile.selected {
             border: 2px solid #00e5ff;
             box-shadow: 0 0 15px #00e5ff;
-            z-index: 10;
+            z-index: 20;
             transform: scale(0.95) !important;
         }
 
-        /* --- PALETA FRIA (CORES DOS TILES) --- */
-        /* Iniciais: Cianos Claros */
+        /* CORES */
         .tile[data-val="2"]    { background: #e0f7fa; color: #263238; }
         .tile[data-val="4"]    { background: #b2ebf2; color: #263238; }
-        /* Intermediários: Azuis Céu */
         .tile[data-val="8"]    { background: #80deea; color: #263238; }
         .tile[data-val="16"]   { background: #4dd0e1; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
         .tile[data-val="32"]   { background: #26c6da; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
         .tile[data-val="64"]   { background: #00bcd4; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
-        /* Avançados: Azuis Reais e Indigo */
         .tile[data-val="128"]  { background: #039be5; color: #fff; font-size: 24px; }
         .tile[data-val="256"]  { background: #0288d1; color: #fff; font-size: 24px; }
         .tile[data-val="512"]  { background: #0277bd; color: #fff; font-size: 24px; box-shadow: 0 0 10px rgba(2, 119, 189, 0.6); }
-        /* Elite: Roxos e Violetas */
         .tile[data-val="1024"] { background: #3949ab; color: #fff; font-size: 20px; box-shadow: 0 0 15px rgba(57, 73, 171, 0.6); }
         .tile[data-val="2048"] { background: #5e35b1; color: #fff; font-size: 20px; box-shadow: 0 0 15px rgba(94, 53, 177, 0.7); }
-        /* God Tier: Magentas e Escuros */
         .tile[data-val="4096"] { background: #8e24aa; color: #fff; font-size: 18px; }
         .tile[data-val="8192"] { background: #ad1457; color: #fff; font-size: 18px; }
-        
-        .tile.high-tier { 
-            background: #000; 
-            color: #00e5ff; 
-            font-size: 12px; 
-            border: 1px solid #00e5ff;
-            box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.3);
-            text-shadow: 0 0 5px #00e5ff;
-        }
+        .tile.high-tier { background: #000; color: #00e5ff; font-size: 12px; border: 1px solid #00e5ff; box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.3); text-shadow: 0 0 5px #00e5ff; }
 
-        /* --- SIDEBAR / PAINEL DE CONTROLE --- */
+        /* SIDEBAR & UI */
         .sidebar {
-            background: var(--sidebar-bg);
-            width: 240px;
-            padding: 20px;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            box-shadow: 5px 5px 15px rgba(0,0,0,0.4);
-            border-top: 3px solid #37474f;
+            background: var(--sidebar-bg); width: 240px; padding: 20px; border-radius: 8px;
+            display: flex; flex-direction: column; gap: 15px;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.4); border-top: 3px solid #37474f;
         }
-
-        /* Tela Hacker */
         .security-screen {
-            background: var(--screen-bg);
-            color: var(--screen-text);
-            font-family: "Courier New", monospace;
-            padding: 10px;
-            border-radius: 4px;
-            text-align: right;
-            font-size: 18px;
-            height: 35px;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            border: 1px solid #444;
-            box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.1);
-            letter-spacing: 2px;
+            background: var(--screen-bg); color: var(--screen-text); font-family: "Courier New", monospace;
+            padding: 10px; border-radius: 4px; text-align: right; font-size: 18px; height: 35px;
+            display: flex; align-items: center; justify-content: flex-end; border: 1px solid #444;
+            box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.1); letter-spacing: 2px;
         }
-
-        /* Teclado 3x3 */
-        .keypad-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-        }
-
+        .keypad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
         .key-btn {
-            background: var(--keypad-btn);
-            color: #cfd8dc;
-            font-size: 18px;
-            padding: 15px 0;
-            border-radius: 4px;
-            text-align: center;
-            font-family: monospace;
-            transition: background 0.1s;
+            background: var(--keypad-btn); color: #cfd8dc; font-size: 18px; padding: 15px 0; border-radius: 4px;
+            text-align: center; font-family: monospace; transition: background 0.1s;
         }
         .key-btn:hover { background: var(--keypad-btn-hover); }
         .key-btn:active { background: #00bcd4; color: #000; }
-
-        /* Barra Inferior (0 e Enter) */
         .bottom-bar { display: flex; gap: 6px; }
         .btn-zero { flex: 1; background: var(--keypad-btn); }
-        .btn-enter { 
-            flex: 2; 
-            background: #b71c1c; /* Vermelho fechado */
-            font-size: 14px; 
-            font-weight: bold;
-            color: #fff;
-        }
+        .btn-enter { flex: 2; background: #b71c1c; font-size: 14px; font-weight: bold; color: #fff; }
 
-        /* PAINEL DESBLOQUEADO (God Panel) */
         #god-panel {
-            display: none; /* Escondido por padrão */
-            flex-direction: column;
-            gap: 12px;
-            background: #263238;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #00e5ff;
-            animation: slideDown 0.5s;
+            display: none; flex-direction: column; gap: 12px; background: #263238; padding: 10px;
+            border-radius: 5px; border: 1px solid #00e5ff; animation: slideDown 0.5s;
         }
-
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-
         .god-label { color: #80deea; font-size: 12px; margin-bottom: 2px; text-transform: uppercase;}
-        
-        select {
-            width: 100%;
-            padding: 8px;
-            background: #37474f;
-            border: 1px solid #546e7a;
-            color: #fff;
-            border-radius: 3px;
-        }
-
-        /* Toggle Button para Swap */
-        .swap-toggle {
-            background: #455a64;
-            width: 100%;
-            text-align: left;
-            position: relative;
-            padding-left: 40px;
-        }
+        select { width: 100%; padding: 8px; background: #37474f; border: 1px solid #546e7a; color: #fff; border-radius: 3px; }
+        .swap-toggle { background: #455a64; width: 100%; text-align: left; position: relative; padding-left: 40px; }
         .swap-toggle::before {
-            content: '';
-            position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #cfd8dc;
-            box-shadow: 0 0 5px #cfd8dc;
+            content: ''; position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+            width: 12px; height: 12px; border-radius: 50%; background: #cfd8dc; box-shadow: 0 0 5px #cfd8dc;
         }
-        
         .swap-toggle.active { background: #2e3b40; border: 1px solid #00c853; color: #00c853;}
         .swap-toggle.active::before { background: #00c853; box-shadow: 0 0 8px #00c853; }
+
+        /* GAME OVER */
+        .game-over-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(33, 33, 33, 0.9); z-index: 100;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; color: var(--screen-text); animation: fadeIn 0.5s ease-in-out;
+        }
+        .game-over-overlay h2 { font-size: 40px; margin: 0 0 10px 0; text-shadow: 0 0 10px var(--screen-text); font-family: "Courier New", monospace; }
+        .game-over-overlay button { background-color: var(--powerup-active); box-shadow: 0 0 15px var(--powerup-active); font-size: 18px; padding: 12px 24px; border:none; color:white; border-radius:4px; font-weight:bold; cursor:pointer;}
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
     </style>
 </head>
@@ -289,7 +255,6 @@
             <div>
                 <h1>Ultra 2048</h1>
                 <div style="font-size: 12px; color: #546e7a;">Grid 8x8 | Meta: 2^21</div>
-                <div style="font-size: 12px; color: #546e7a;">Feito para relaxar, se divertir e não se estressar</div>
             </div>
             <div class="score-container">
                 <span class="score-title">Score</span>
@@ -299,18 +264,26 @@
 
         <div id="status-msg"></div>
 
-        <div id="grid-container"></div>
+        <div id="grid-container">
+            <div class="grid-bg-layer" id="grid-bg-layer"></div>
+            
+            <div id="game-over-overlay" class="game-over-overlay">
+                <h2>SYSTEM FAILURE</h2>
+                <p>Movimentos Esgotados</p>
+                <p style="font-size: 14px; color: #b0bec5;">Score Final: <span id="final-score" style="color:white; font-weight:bold;">0</span></p>
+                <button onclick="initGame()">REINICIAR SISTEMA</button>
+            </div>
+        </div>
         
         <div style="margin-top: 15px;">
             <button class="btn-restart" onclick="initGame()">Reiniciar Jogo</button>
-            <p>Senhas podem ser comuns, tendo 11 dígitos e o menor deles se repete uma vez</p>
+            <p style="font-size: 12px; color: #546e7a;">Senha do sistema: 12345678900</p>
         </div>
     </div>
 
     <div class="sidebar">
         <div id="security-panel">
             <div class="security-screen" id="display-screen">LOCKED</div>
-            
             <div class="keypad-grid" style="margin-top: 10px;">
                 <button class="key-btn" onclick="pressKey('1')">1</button>
                 <button class="key-btn" onclick="pressKey('2')">2</button>
@@ -322,7 +295,6 @@
                 <button class="key-btn" onclick="pressKey('8')">8</button>
                 <button class="key-btn" onclick="pressKey('9')">9</button>
             </div>
-            
             <div class="bottom-bar" style="margin-top: 6px;">
                 <button class="key-btn btn-zero" onclick="pressKey('0')">0</button>
                 <button class="key-btn btn-enter" id="btn-enter" onclick="checkPassword()">ENTER</button>
@@ -331,49 +303,56 @@
 
         <div id="god-panel">
             <div style="text-align: center; color: #00e5ff; font-weight: bold; border-bottom: 1px solid #00e5ff; padding-bottom:5px;">SYSTEM OVERRIDE</div>
-            
             <div>
                 <div class="god-label">Gerar Matéria</div>
                 <select id="god-select" onchange="enableGodPlacement()">
                     <option value="0">-- Selecione Valor --</option>
                     <option value="0">Deletar Peça (0)</option>
-                    </select>
+                </select>
             </div>
-
             <div>
                 <div class="god-label">Manipular Espaço</div>
                 <button id="btn-swap-toggle" class="swap-toggle" onclick="toggleSwapMode()">Ativar Troca (Swap)</button>
             </div>
-
-            <div style="font-size: 10px; color: #b0bec5; text-align: center; margin-top:5px;" id="god-instruction">
-                Painel Ativo.
-            </div>
-
+            <div style="font-size: 10px; color: #b0bec5; text-align: center; margin-top:5px;" id="god-instruction">Painel Ativo.</div>
             <button style="background: #b71c1c; font-size: 10px; padding: 5px;" onclick="lockGodMode()">BLOQUEAR SISTEMA</button>
         </div>
     </div>
 </div>
 
 <script>
-    // --- CONFIGURAÇÃO 8x8 ---
     const gridSize = 8;
     let board = [];
     let score = 0;
-    
-    // Estados do Jogo
+    let nextTileId = 1;
+
     let isSwapMode = false;
     let swapSelection = null;
-    
     let isGodModeUnlocked = false;
     let godPlacementValue = 0; 
-
-    // Segurança
     let inputBuffer = "";
     const SECRET_CODE = "12345678900";
 
+    function createGridBg() {
+        const layer = document.getElementById('grid-bg-layer');
+        layer.innerHTML = '';
+        for(let i=0; i<gridSize*gridSize; i++) {
+            let div = document.createElement('div');
+            div.className = 'grid-slot';
+            layer.appendChild(div);
+        }
+    }
+    createGridBg();
+
     function initGame() {
-        board = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
+        document.getElementById('game-over-overlay').style.display = 'none';
+        board = Array(gridSize).fill().map(() => Array(gridSize).fill(null));
         score = 0;
+        
+        const container = document.getElementById('grid-container');
+        const tiles = container.querySelectorAll('.tile');
+        tiles.forEach(t => t.remove());
+
         resetModes();
         addNewTile();
         addNewTile();
@@ -382,239 +361,54 @@
         document.getElementById('status-msg').innerText = "";
     }
 
-    function resetModes() {
-        isSwapMode = false;
-        swapSelection = null;
-        updateSwapUI();
-        
-        godPlacementValue = 0;
-        if(isGodModeUnlocked) {
-            document.getElementById('god-select').value = "0";
-            document.getElementById('god-instruction').innerText = "Sistema Aguardando...";
-        }
-    }
-
-    // --- TECLADO E SENHA ---
-    function pressKey(key) {
-        if(isGodModeUnlocked) return; 
-        if (inputBuffer.length < 15) {
-            inputBuffer += key;
-            updateDisplay();
-        }
-    }
-
-    function updateDisplay() {
-        const screen = document.getElementById('display-screen');
-        screen.innerText = inputBuffer.length > 0 ? "•".repeat(inputBuffer.length) : "LOCKED";
-        screen.style.color = inputBuffer.length > 0 ? "#fff" : "#00e5ff";
-    }
-
-    function checkPassword() {
-        if(isGodModeUnlocked) return;
-
-        const screen = document.getElementById('display-screen');
-        const enterBtn = document.getElementById('btn-enter');
-
-        if (inputBuffer === SECRET_CODE) {
-            screen.innerText = "UNLOCKED";
-            screen.style.color = "#00c853"; // Verde sucesso
-            enterBtn.style.background = "#00c853";
-            
-            setTimeout(() => {
-                unlockGodMode();
-            }, 600);
-        } else {
-            screen.innerText = "DENIED";
-            screen.style.color = "#ff1744"; // Vermelho erro
-            inputBuffer = "";
-            setTimeout(() => { updateDisplay(); }, 1000);
-        }
-    }
-
-    function unlockGodMode() {
-        isGodModeUnlocked = true;
-        document.getElementById('security-panel').style.display = 'none';
-        document.getElementById('god-panel').style.display = 'flex';
-        
-        // Popula Select
-        const select = document.getElementById('god-select');
-        // Mantém as 2 primeiras opções estáticas
-        while(select.options.length > 2) { select.remove(2); }
-        
-        for(let i=1; i<=21; i++) {
-            let val = Math.pow(2, i);
-            let opt = document.createElement('option');
-            opt.value = val;
-            opt.innerText = val.toLocaleString();
-            select.appendChild(opt);
-        }
-    }
-
-    function lockGodMode() {
-        isGodModeUnlocked = false;
-        inputBuffer = "";
-        document.getElementById('security-panel').style.display = 'block';
-        document.getElementById('god-panel').style.display = 'none';
-        document.getElementById('btn-enter').style.background = "#b71c1c";
-        updateDisplay();
-        resetModes();
-    }
-
-    // --- FUNÇÕES DO PAINEL HACKER ---
-
-    // 1. GOD MODE (SPAWN)
-    function enableGodPlacement() {
-        // Desativa swap se estiver ligado
-        if(isSwapMode) toggleSwapMode();
-
-        const val = parseInt(document.getElementById('god-select').value);
-        godPlacementValue = val;
-        const msg = document.getElementById('god-instruction');
-        const status = document.getElementById('status-msg');
-        
-        if (val > 0) {
-            msg.innerText = `Pronto para injetar ${val}.`;
-            status.innerText = `MODO CRIAÇÃO: Clique para adicionar ${val}`;
-        } else if (val === 0 && document.getElementById('god-select').selectedIndex > 0) {
-             msg.innerText = `Pronto para deletar.`;
-             status.innerText = `MODO APAGAR: Clique para remover peça`;
-        } else {
-            msg.innerText = "Aguardando comando...";
-            status.innerText = "";
-        }
-    }
-
-    // 2. SWAP MODE (TROCA)
-    function toggleSwapMode() {
-        // Reseta God Mode Spawn se estiver ativo
-        if(godPlacementValue !== 0) {
-            document.getElementById('god-select').value = "0";
-            godPlacementValue = 0;
-        }
-
-        isSwapMode = !isSwapMode;
-        swapSelection = null;
-        updateSwapUI();
-        drawBoard();
-    }
-
-    function updateSwapUI() {
-        const btn = document.getElementById('btn-swap-toggle');
-        const status = document.getElementById('status-msg');
-        const instr = document.getElementById('god-instruction');
-
-        if(isSwapMode) {
-            btn.classList.add('active');
-            btn.innerHTML = "Troca Ativada (ON)";
-            status.innerText = "MODO TROCA: Clique na peça 1 e depois na peça 2";
-            instr.innerText = "Selecione duas peças no grid.";
-        } else {
-            btn.classList.remove('active');
-            btn.innerHTML = "Ativar Troca (Swap)";
-            if(godPlacementValue === 0) status.innerText = "";
-            instr.innerText = "Sistema Aguardando...";
-        }
-    }
-
-    // --- INTERAÇÃO COM O TABULEIRO ---
-    function handleTileClick(r, c) {
-        if(!isGodModeUnlocked) return; // Nada acontece se não tiver hackeado
-
-        // AÇÃO 1: CRIAR/DELETAR PEÇA
-        if (godPlacementValue !== 0 || (document.getElementById('god-select').selectedIndex === 1)) {
-            // Se for opção "Deletar" (index 1), valor é 0. Se for criar, valor > 0
-            board[r][c] = godPlacementValue;
-            drawBoard();
-            return;
-        }
-
-        // AÇÃO 2: TROCAR PEÇA
-        if (isSwapMode) {
-            if (!swapSelection) {
-                swapSelection = {r, c};
-                drawBoard(); // Mostra seleção
-            } else {
-                // Troca valores
-                let val1 = board[swapSelection.r][swapSelection.c];
-                let val2 = board[r][c];
-                board[swapSelection.r][swapSelection.c] = val2;
-                board[r][c] = val1;
-                
-                swapSelection = null;
-                drawBoard();
-                document.getElementById('status-msg').innerText = "Troca realizada.";
-            }
-        }
-    }
-
-    // --- ENGINE GRÁFICA ---
-    function drawBoard() {
-        const container = document.getElementById('grid-container');
-        container.innerHTML = '';
-        
+    function addNewTile() {
+        let emptyTiles = [];
         for(let r=0; r<gridSize; r++){
             for(let c=0; c<gridSize; c++){
-                let val = board[r][c];
-                let tile = document.createElement('div');
-                tile.classList.add('tile');
-                
-                if (val > 0) {
-                    tile.innerText = val;
-                    if(val > 10000) tile.classList.add('high-tier');
-                    else tile.setAttribute('data-val', val);
-
-                    // Ajuste de fonte para 8x8
-                    if (val > 999999) tile.style.fontSize = "10px";
-                    else if (val > 9999) tile.style.fontSize = "14px";
-                    else tile.style.fontSize = "18px";
-                }
-
-                if (swapSelection && swapSelection.r === r && swapSelection.c === c) {
-                    tile.classList.add('selected');
-                }
-
-                // Só adiciona evento de clique se o painel estiver desbloqueado
-                if(isGodModeUnlocked) {
-                    tile.onclick = () => handleTileClick(r, c);
-                    tile.style.cursor = "crosshair";
-                } else {
-                    tile.style.cursor = "default";
-                }
-
-                container.appendChild(tile);
+                if(board[r][c] === null) emptyTiles.push({r, c});
             }
+        }
+        if(emptyTiles.length > 0){
+            let rand = emptyTiles[Math.floor(Math.random() * emptyTiles.length)];
+            board[rand.r][rand.c] = {
+                val: Math.random() < 0.9 ? 2 : 4,
+                id: nextTileId++
+            };
         }
     }
 
-    function updateScore() { document.getElementById('score').innerText = score; }
-
-    // --- LÓGICA 2048 ---
     function slide(row) {
-        let arr = row.filter(val => val);
+        let arr = row.filter(t => t !== null);
         let missing = gridSize - arr.length;
-        let zeros = Array(missing).fill(0);
+        let zeros = Array(missing).fill(null);
         return arr.concat(zeros);
     }
+
     function combine(row) {
         for (let i = 0; i < gridSize - 1; i++) {
-            if (row[i] !== 0 && row[i] === row[i + 1]) {
-                row[i] *= 2; row[i + 1] = 0; score += row[i];
+            if (row[i] !== null && row[i+1] !== null && row[i].val === row[i+1].val) {
+                row[i] = { val: row[i].val * 2, id: nextTileId++, merged: true };
+                row[i+1] = null;
+                score += row[i].val;
             }
         }
         return row;
     }
+
     function moveLeft() {
         let moved = false;
         for (let r = 0; r < gridSize; r++) {
-            let original = [...board[r]];
+            let oldIds = board[r].map(t => t ? t.id : 'x').join(',');
             let row = slide(board[r]);
             row = combine(row);
             row = slide(row);
             board[r] = row;
-            if(JSON.stringify(original) !== JSON.stringify(board[r])) moved = true;
+            let newIds = board[r].map(t => t ? t.id : 'x').join(',');
+            if(oldIds !== newIds) moved = true;
         }
         return moved;
     }
+
     function rotateBoard() {
         let newBoard = board[0].map((val, index) => board.map(row => row[index]).reverse());
         board = newBoard;
@@ -624,10 +418,127 @@
         board = newBoard;
     }
 
-    function control(e) {
-        // Bloqueia setas se estiver no modo SWAP para evitar conflito visual
-        if(isSwapMode) return;
+    // --- ENGINE SEGURA COM FLIP (ANIMAÇÃO SEM QUEBRAR LAYOUT) ---
+    function drawBoard() {
+        const container = document.getElementById('grid-container');
+        
+        // 1. Mapeia tiles existentes e pega posição ATUAL (rect)
+        const existingTiles = {};
+        const oldRects = {};
+        
+        container.querySelectorAll('.tile').forEach(el => {
+            const id = el.getAttribute('data-id');
+            existingTiles[id] = el;
+            oldRects[id] = el.getBoundingClientRect(); // Grava onde estava
+        });
 
+        const activeIds = new Set();
+
+        // 2. Atualiza o DOM e Layout (CSS Grid move as peças instantaneamente aqui)
+        for(let r=0; r<gridSize; r++){
+            for(let c=0; c<gridSize; c++){
+                let tileData = board[r][c];
+                
+                if (tileData !== null) {
+                    activeIds.add(tileData.id.toString());
+                    let el = existingTiles[tileData.id];
+
+                    if (!el) {
+                        el = document.createElement('div');
+                        el.className = 'tile';
+                        el.setAttribute('data-id', tileData.id);
+                        container.appendChild(el);
+                        // Novos tiles não têm oldRect, então apenas "popIn" (CSS Animation)
+                    }
+
+                    // Atualiza Estado
+                    el.innerText = tileData.val;
+                    if(tileData.val > 10000) el.classList.add('high-tier');
+                    else el.setAttribute('data-val', tileData.val);
+
+                    if (tileData.val > 999999) el.style.fontSize = "10px";
+                    else if (tileData.val > 9999) el.style.fontSize = "14px";
+                    else el.style.fontSize = "18px";
+
+                    // POSICIONAMENTO SEGURO (GRID)
+                    el.style.setProperty('--row', r + 1);
+                    el.style.setProperty('--col', c + 1);
+
+                    // Animação de fusão
+                    if(tileData.merged) {
+                        el.classList.add('merged');
+                        setTimeout(() => { if(el) el.classList.remove('merged'); }, 300);
+                        tileData.merged = false;
+                    }
+
+                    if (swapSelection && swapSelection.r === r && swapSelection.c === c) {
+                        el.classList.add('selected');
+                    } else {
+                        el.classList.remove('selected');
+                    }
+                    
+                    if(isGodModeUnlocked) {
+                        el.onclick = () => handleTileClick(r, c);
+                        el.style.cursor = "crosshair";
+                    } else {
+                        el.style.cursor = "default";
+                        el.onclick = null;
+                    }
+                }
+            }
+        }
+
+        // 3. Remove tiles mortos
+        for(let id in existingTiles) {
+            if(!activeIds.has(id)) existingTiles[id].remove();
+        }
+
+        // 4. APLICA O TRUQUE DO FLIP PARA ANIMAR O DESLIZE
+        // O browser já calculou a nova posição no grid no passo 2.
+        activeIds.forEach(id => {
+            const el = existingTiles[id];
+            const oldRect = oldRects[id];
+            
+            // Só anima se a peça JÁ existia
+            if (el && oldRect) {
+                const newRect = el.getBoundingClientRect(); // Pega nova posição
+                
+                // Calcula a diferença
+                const dx = oldRect.left - newRect.left;
+                const dy = oldRect.top - newRect.top;
+
+                // Se houve movimento visual
+                if (dx !== 0 || dy !== 0) {
+                    // INVERT: Coloca a peça visualmente onde ela estava antes (sem transition)
+                    el.style.transition = 'none';
+                    el.style.transform = `translate(${dx}px, ${dy}px)`;
+
+                    // PLAY: Remove o transform para ela deslizar para a nova posição
+                    // requestAnimationFrame garante que o browser renderizou o passo acima
+                    requestAnimationFrame(() => {
+                        el.style.transition = 'transform 0.15s ease-in-out';
+                        el.style.transform = '';
+                    });
+                }
+            }
+        });
+    }
+
+    function checkGameOver() {
+        for(let r=0; r<gridSize; r++) {
+            for(let c=0; c<gridSize; c++) if(board[r][c] === null) return false;
+        }
+        for(let r=0; r<gridSize; r++) {
+            for(let c=0; c<gridSize; c++) {
+                if(c < gridSize - 1 && board[r][c].val === board[r][c+1].val) return false;
+                if(r < gridSize - 1 && board[r][c].val === board[r+1][c].val) return false;
+            }
+        }
+        return true;
+    }
+
+    function control(e) {
+        if(isSwapMode) return;
         if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.code) > -1) e.preventDefault();
 
         let moved = false;
@@ -638,26 +549,120 @@
 
         if (moved) {
             addNewTile();
-            setTimeout(() => { drawBoard(); updateScore(); }, 10);
+            // Pequeno delay para garantir que o DOM esteja pronto para a lógica FLIP
+            requestAnimationFrame(() => {
+                drawBoard(); 
+                updateScore(); 
+                if(checkGameOver()) {
+                    document.getElementById('final-score').innerText = score;
+                    document.getElementById('game-over-overlay').style.display = 'flex';
+                }
+            });
         }
     }
-    
-    function addNewTile() {
-        let emptyTiles = [];
-        for(let r=0; r<gridSize; r++){
-            for(let c=0; c<gridSize; c++){
-                if(board[r][c] === 0) emptyTiles.push({r, c});
+
+    function handleTileClick(r, c) {
+        if(!isGodModeUnlocked) return; 
+        if (godPlacementValue !== 0 || (document.getElementById('god-select').selectedIndex === 1)) {
+            if(godPlacementValue === 0) board[r][c] = null;
+            else board[r][c] = { val: godPlacementValue, id: nextTileId++ };
+            drawBoard(); return;
+        }
+        if (isSwapMode) {
+            if (!swapSelection) {
+                swapSelection = {r, c}; drawBoard(); 
+            } else {
+                let temp = board[swapSelection.r][swapSelection.c];
+                board[swapSelection.r][swapSelection.c] = board[r][c];
+                board[r][c] = temp;
+                swapSelection = null; drawBoard();
+                document.getElementById('status-msg').innerText = "Troca realizada.";
             }
         }
-        if(emptyTiles.length > 0){
-            let rand = emptyTiles[Math.floor(Math.random() * emptyTiles.length)];
-            board[rand.r][rand.c] = Math.random() < 0.9 ? 2 : 4;
+    }
+
+    function resetModes() {
+        isSwapMode = false; swapSelection = null; updateSwapUI();
+        godPlacementValue = 0;
+        if(isGodModeUnlocked) {
+            document.getElementById('god-select').value = "0";
+            document.getElementById('god-instruction').innerText = "Sistema Aguardando...";
+        }
+    }
+    function updateScore() { document.getElementById('score').innerText = score; }
+    function pressKey(key) {
+        if(isGodModeUnlocked) return; 
+        if (inputBuffer.length < 15) { inputBuffer += key; updateDisplay(); }
+    }
+    function updateDisplay() {
+        const screen = document.getElementById('display-screen');
+        screen.innerText = inputBuffer.length > 0 ? "•".repeat(inputBuffer.length) : "LOCKED";
+        screen.style.color = inputBuffer.length > 0 ? "#fff" : "#00e5ff";
+    }
+    function checkPassword() {
+        if(isGodModeUnlocked) return;
+        const screen = document.getElementById('display-screen');
+        const enterBtn = document.getElementById('btn-enter');
+        if (inputBuffer === SECRET_CODE) {
+            screen.innerText = "UNLOCKED"; screen.style.color = "#00c853"; enterBtn.style.background = "#00c853";
+            setTimeout(() => { unlockGodMode(); }, 600);
+        } else {
+            screen.innerText = "DENIED"; screen.style.color = "#ff1744"; inputBuffer = "";
+            setTimeout(() => { updateDisplay(); }, 1000);
+        }
+    }
+    function unlockGodMode() {
+        isGodModeUnlocked = true;
+        document.getElementById('security-panel').style.display = 'none';
+        document.getElementById('god-panel').style.display = 'flex';
+        const select = document.getElementById('god-select');
+        while(select.options.length > 2) { select.remove(2); }
+        for(let i=1; i<=21; i++) {
+            let val = Math.pow(2, i);
+            let opt = document.createElement('option');
+            opt.value = val; opt.innerText = val.toLocaleString(); select.appendChild(opt);
+        }
+    }
+    function lockGodMode() {
+        isGodModeUnlocked = false; inputBuffer = "";
+        document.getElementById('security-panel').style.display = 'block';
+        document.getElementById('god-panel').style.display = 'none';
+        document.getElementById('btn-enter').style.background = "#b71c1c";
+        updateDisplay(); resetModes();
+    }
+    function enableGodPlacement() {
+        if(isSwapMode) toggleSwapMode();
+        const val = parseInt(document.getElementById('god-select').value);
+        godPlacementValue = val;
+        const msg = document.getElementById('god-instruction');
+        const status = document.getElementById('status-msg');
+        if (val > 0) {
+            msg.innerText = `Pronto para injetar ${val}.`; status.innerText = `MODO CRIAÇÃO: Clique para adicionar ${val}`;
+        } else if (val === 0 && document.getElementById('god-select').selectedIndex > 0) {
+             msg.innerText = `Pronto para deletar.`; status.innerText = `MODO APAGAR: Clique para remover peça`;
+        } else {
+            msg.innerText = "Aguardando comando..."; status.innerText = "";
+        }
+    }
+    function toggleSwapMode() {
+        if(godPlacementValue !== 0) { document.getElementById('god-select').value = "0"; godPlacementValue = 0; }
+        isSwapMode = !isSwapMode; swapSelection = null; updateSwapUI(); drawBoard();
+    }
+    function updateSwapUI() {
+        const btn = document.getElementById('btn-swap-toggle');
+        const status = document.getElementById('status-msg');
+        const instr = document.getElementById('god-instruction');
+        if(isSwapMode) {
+            btn.classList.add('active'); btn.innerHTML = "Troca Ativada (ON)";
+            status.innerText = "MODO TROCA: Clique na peça 1 e depois na peça 2"; instr.innerText = "Selecione duas peças no grid.";
+        } else {
+            btn.classList.remove('active'); btn.innerHTML = "Ativar Troca (Swap)";
+            if(godPlacementValue === 0) status.innerText = ""; instr.innerText = "Sistema Aguardando...";
         }
     }
 
     document.addEventListener('keydown', control);
     initGame();
-
 </script>
 </body>
 </html>
