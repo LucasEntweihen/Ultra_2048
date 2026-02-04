@@ -1,17 +1,19 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="Gemini_Generated_Image_r2nga0r2nga0r2ng-removebg-preview.png" type="image/x-icon">
     <title>Ultra 2048 - 4x4 Edition</title>
     <style>
-        /* (Mesmo CSS do arquivo acima, exceto pelo Grid 4x4) */
         :root {
+            /* COOL PALETTE (BASE) */
             --bg-color: #e3f1f0;
             --grid-bg: #263238;
             --empty-tile: #546e7a;
             --text-main: #263238; 
+            
+            /* UI */
             --sidebar-bg: #212121;
             --screen-bg: #000;
             --screen-text: #00e5ff;
@@ -19,8 +21,14 @@
             --keypad-btn-hover: #455a64;
             --powerup-active: #00c853;
             --panel-border: #37474f;
+            
+            /* Buttons */
             --reroll-bg: #0097a7;
             --reroll-hover: #00acc1;
+            --chaos-bg: #6200ea;
+            --chaos-glow: #d500f9;
+
+            /* VFX */
             --fx-pink: #ff00ff;
             --fx-orange: #ff9100;
             --fx-lime: #76ff03;
@@ -30,7 +38,8 @@
         body.dark-mode { --text-main: #e0f7fa; --panel-border: #ff1744; }
 
         body {
-            background-color: var(--bg-color); color: var(--text-main);
+            background-color: var(--bg-color);
+            color: var(--text-main);
             font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             min-height: 100vh; margin: 0; user-select: none;
@@ -38,9 +47,15 @@
             transition: color 0.2s ease;
         }
 
-        .game-wrapper { display: flex; align-items: flex-start; gap: 15px; padding: 10px; flex-wrap: wrap; justify-content: center; position: relative; }
+        /* LAYOUT */
+        .game-wrapper {
+            display: flex; align-items: flex-start; gap: 15px; padding: 10px;
+            flex-wrap: wrap; justify-content: center; position: relative;
+        }
         .game-column { display: flex; flex-direction: column; align-items: center; }
+
         h1 { margin: 0 0 5px 0; font-size: 36px; color: var(--text-main); font-weight: 800; letter-spacing: -1px; }
+        
         .header { display: flex; justify-content: space-between; width: 100%; max-width: 550px; align-items: center; margin-bottom: 10px; }
 
         .score-container {
@@ -51,6 +66,7 @@
         }
         .score-title { font-size: 10px; text-transform: uppercase; display: block; color: #80deea;}
 
+        /* CONTROL BUTTONS */
         .controls-row { display: flex; gap: 8px; justify-content: center; width: 100%; margin-top: 15px; flex-wrap: wrap;}
         .btn-control, .btn-link {
             border: none; padding: 10px 10px; border-radius: 4px; cursor: pointer;
@@ -65,6 +81,7 @@
         .btn-restart:hover { background: #546e7a; }
         .btn-fx { background: #78909c; }
         .btn-fx.active { background: #ef6c00; }
+        
         .btn-mode { background: #00838f; border: 1px solid #00acc1; }
         .btn-mode:hover { background: #00acc1; }
 
@@ -182,7 +199,7 @@
         <div class="header">
             <div>
                 <h1>Ultra 2048</h1>
-                <div style="font-size: 12px; color: #546e7a;">Grid 4x4 | Classic Size</div>
+                <div style="font-size: 12px; color: #546e7a;">Grid 4x4 | 4x4 Edition</div>
             </div>
             <div class="score-container">
                 <span class="score-title">Score</span>
@@ -197,9 +214,9 @@
             
             <div id="game-over-overlay" class="game-over-overlay">
                 <h2>SYSTEM FAILURE</h2>
-                <p>Sem Movimentos Possíveis</p>
-                <p style="font-size: 14px; color: #b0bec5; margin-top:5px;">Score Final: <span id="final-score" style="color:white; font-weight:bold;">0</span></p>
-                <button onclick="initGame()">REINICIAR SISTEMA</button>
+                <p>No Moves Possible</p>
+                <p style="font-size: 14px; color: #b0bec5; margin-top:5px;">Final Score: <span id="final-score" style="color:white; font-weight:bold;">0</span></p>
+                <button onclick="initGame()">SYSTEM REBOOT</button>
             </div>
         </div>
         
@@ -207,11 +224,11 @@
             <button class="btn-control btn-restart" onclick="initGame()">Restart</button>
             <button id="btn-fx" class="btn-control btn-fx" onclick="toggleFX()">FX: OFF</button>
             <button id="btn-chaos" class="btn-control btn-chaos" onclick="toggleChaotic()">CHAOS</button>
-            <a href="index.html" class="btn-link btn-mode">Ir para 8x8</a>
+            <a href="index.html" class="btn-link btn-mode">Go to 8x8</a>
         </div>
         
         <div style="margin-top: 15px; text-align: center; width: 100%;">
-            <p style="font-size: 12px; color: var(--text-main); margin-top: 5px; opacity: 0.7;">Dica de Acesso: A ordem de tudo (1 a 9) termina no par do vazio.</p>
+            <p style="font-size: 12px; color: var(--text-main); margin-top: 5px; opacity: 0.7;">Access Hint: The order of everything (1 to 9) ends in the void's pair.</p>
         </div>
     </div>
 
@@ -242,7 +259,7 @@
             </div>
         </div>
         
-        <button class="btn-reroll-action" onclick="rerollBoard()" title="Reroll (Bagunçar)">
+        <button class="btn-reroll-action" onclick="rerollBoard()" title="Reroll (Shuffle)">
             <svg viewBox="0 0 24 24">
                 <path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/>
             </svg>
@@ -252,24 +269,24 @@
         <div id="god-panel">
             <div style="text-align: center; color: #00e5ff; font-weight: bold; border-bottom: 1px solid #00e5ff; padding-bottom:5px;">SYSTEM OVERRIDE</div>
             <div>
-                <div class="god-label">Gerar Matéria</div>
+                <div class="god-label">Generate Matter</div>
                 <select id="god-select" onchange="enableGodPlacement()">
-                    <option value="0">-- Selecione Valor --</option>
-                    <option value="0">Deletar Peça (0)</option>
+                    <option value="0">-- Select Value --</option>
+                    <option value="0">Delete Tile (0)</option>
                 </select>
             </div>
             <div>
-                <div class="god-label">Manipular Espaço</div>
-                <button id="btn-swap-toggle" class="swap-toggle" onclick="toggleSwapMode()">Ativar Troca (Swap)</button>
+                <div class="god-label">Manipulate Space</div>
+                <button id="btn-swap-toggle" class="swap-toggle" onclick="toggleSwapMode()">Activate Swap</button>
             </div>
-            <div style="font-size: 10px; color: #b0bec5; text-align: center; margin-top:5px;" id="god-instruction">Painel Ativo.</div>
-            <button style="background: #b71c1c; font-size: 10px; padding: 5px;" onclick="lockGodMode()">BLOQUEAR SISTEMA</button>
+            <div style="font-size: 10px; color: #b0bec5; text-align: center; margin-top:5px;" id="god-instruction">Panel Active.</div>
+            <button style="background: #b71c1c; font-size: 10px; padding: 5px;" onclick="lockGodMode()">LOCK SYSTEM</button>
         </div>
     </div>
 </div>
 
 <script>
-    const gridSize = 4; // VERSÃO 4x4
+    const gridSize = 4;
     let board = [];
     let score = 0;
     let nextTileId = 1;
@@ -287,7 +304,7 @@
     let lastMergeTime = Date.now();
     let comboRequestFrame = null;
     let currentIntensity = 0;
-    let isFxEnabled = false; // DESLIGADO POR PADRÃO
+    let isFxEnabled = false;
 
     // Chaotic Mode
     let isChaoticMode = false;
@@ -341,11 +358,9 @@
         updateComboLoop();
     }
 
-    // --- CHAOTIC MODE LOGIC ---
     function toggleChaotic() {
         isChaoticMode = !isChaoticMode;
         const btn = document.getElementById('btn-chaos');
-        
         if(isChaoticMode) {
             btn.classList.add('active');
             chaoticInterval = setInterval(destroyLeastActiveTile, 2000);
@@ -412,7 +427,6 @@
         }
     }
 
-    // --- TOGGLE FX ---
     function toggleFX() {
         isFxEnabled = !isFxEnabled;
         const btn = document.getElementById('btn-fx');
@@ -432,7 +446,6 @@
         }
     }
 
-    // --- COMBO LOOP ---
     function updateComboLoop() {
         const now = Date.now();
         const timeLeft = Math.max(0, comboEndTime - now);
@@ -452,6 +465,7 @@
         
         if (targetIntensity < currentIntensity) document.body.style.transition = 'background-color 3s ease, color 3s ease';
         else document.body.style.transition = 'background-color 0.2s ease-out, color 0.2s ease-out';
+        
         currentIntensity = targetIntensity;
 
         if(currentIntensity > 0.05) {
@@ -665,12 +679,9 @@
                     el.innerText = tileData.val;
                     if(tileData.val > 10000) el.classList.add('high-tier');
                     else el.setAttribute('data-val', tileData.val);
-                    
-                    /* FONT SIZES 4x4 */
-                    if (tileData.val > 9999) el.style.fontSize = "30px";
-                    else if (tileData.val > 999) el.style.fontSize = "40px";
-                    else el.style.fontSize = "55px";
-
+                    if (tileData.val > 999999) el.style.fontSize = "10px";
+                    else if (tileData.val > 9999) el.style.fontSize = "14px";
+                    else el.style.fontSize = "18px";
                     el.style.setProperty('--row', r + 1);
                     el.style.setProperty('--col', c + 1);
 
@@ -777,7 +788,7 @@
                 board[swapSelection.r][swapSelection.c] = board[r][c];
                 board[r][c] = temp;
                 swapSelection = null; drawBoard();
-                document.getElementById('status-msg').innerText = "Troca realizada.";
+                document.getElementById('status-msg').innerText = "Swap successful.";
             }
         }
     }
@@ -787,7 +798,7 @@
         godPlacementValue = 0;
         if(isGodModeUnlocked) {
             document.getElementById('god-select').value = "0";
-            document.getElementById('god-instruction').innerText = "Sistema Aguardando...";
+            document.getElementById('god-instruction').innerText = "System Waiting...";
         }
     }
     function updateScore() { document.getElementById('score').innerText = score; }
@@ -834,9 +845,9 @@
         godPlacementValue = val;
         const msg = document.getElementById('god-instruction');
         const status = document.getElementById('status-msg');
-        if (val > 0) { msg.innerText = `MODO CRIAÇÃO: Clique em espaço VAZIO.`; status.innerText = `CRIAR: Selecione slot vazio`; } 
-        else if (val === 0 && document.getElementById('god-select').selectedIndex > 0) { msg.innerText = `MODO DELETAR: Clique em uma PEÇA.`; status.innerText = `APAGAR: Selecione peça existente`; } 
-        else { msg.innerText = "Aguardando comando..."; status.innerText = ""; }
+        if (val > 0) { msg.innerText = `CREATION MODE: Click EMPTY slot.`; status.innerText = `CREATE: Select empty slot`; } 
+        else if (val === 0 && document.getElementById('god-select').selectedIndex > 0) { msg.innerText = `DELETE MODE: Click a TILE.`; status.innerText = `DELETE: Select existing tile`; } 
+        else { msg.innerText = "Waiting for command..."; status.innerText = ""; }
     }
     function toggleSwapMode() {
         if(godPlacementValue !== 0) { document.getElementById('god-select').value = "0"; godPlacementValue = 0; }
@@ -847,11 +858,11 @@
         const status = document.getElementById('status-msg');
         const instr = document.getElementById('god-instruction');
         if(isSwapMode) {
-            btn.classList.add('active'); btn.innerHTML = "Troca Ativada (ON)";
-            status.innerText = "MODO TROCA: Clique na peça 1 e depois na peça 2"; instr.innerText = "Selecione duas peças no grid.";
+            btn.classList.add('active'); btn.innerHTML = "Swap Active (ON)";
+            status.innerText = "SWAP: Click tile 1 then tile 2"; instr.innerText = "Select two tiles on grid.";
         } else {
-            btn.classList.remove('active'); btn.innerHTML = "Ativar Troca (Swap)";
-            if(godPlacementValue === 0) status.innerText = ""; instr.innerText = "Sistema Aguardando...";
+            btn.classList.remove('active'); btn.innerHTML = "Activate Swap";
+            if(godPlacementValue === 0) status.innerText = ""; instr.innerText = "System Waiting...";
         }
     }
 
