@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="Gemini_Generated_Image_r2nga0r2nga0r2ng-removebg-preview.png" type="image/x-icon">
-    <title>Ultra 2048 - Control Edition</title>
+    <title>Ultra 2048 - Final Logic Fix</title>
     <style>
         :root {
             /* PALETA FRIA (BASE) */
             --bg-color: #e3f1f0;
             --grid-bg: #263238;
             --empty-tile: #546e7a;
-            --text-main: #263238; /* Cor dinâmica via JS */
+            --text-main: #263238; 
             
             /* UI */
             --sidebar-bg: #212121;
@@ -22,9 +22,11 @@
             --powerup-active: #00c853;
             --panel-border: #37474f;
             
-            /* Botão Reroll */
+            /* Botões */
             --reroll-bg: #0097a7;
             --reroll-hover: #00acc1;
+            --chaos-bg: #6200ea;
+            --chaos-glow: #d500f9;
 
             /* VFX */
             --fx-pink: #ff00ff;
@@ -33,272 +35,112 @@
             --fx-spawn: #e0f7fa; 
         }
 
-        /* MODO ESCURO (Texto claro quando fundo escuro) */
-        body.dark-mode {
-            --text-main: #e0f7fa;
-            --panel-border: #ff1744; 
-        }
+        body.dark-mode { --text-main: #e0f7fa; --panel-border: #ff1744; }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
             font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            user-select: none;
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding-bottom: 20px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; margin: 0; user-select: none;
+            overflow-y: auto; overflow-x: hidden; padding-bottom: 20px;
             transition: color 0.2s ease;
         }
 
         /* LAYOUT */
         .game-wrapper {
-            display: flex;
-            align-items: flex-start;
-            gap: 15px;
-            padding: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-            position: relative;
+            display: flex; align-items: flex-start; gap: 15px; padding: 10px;
+            flex-wrap: wrap; justify-content: center; position: relative;
         }
-        
-        .game-column {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+        .game-column { display: flex; flex-direction: column; align-items: center; }
 
         h1 { margin: 0 0 5px 0; font-size: 36px; color: var(--text-main); font-weight: 800; letter-spacing: -1px; }
         
-        .header {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            max-width: 550px;
-            align-items: center;
-            margin-bottom: 10px;
-        }
+        .header { display: flex; justify-content: space-between; width: 100%; max-width: 550px; align-items: center; margin-bottom: 10px; }
 
         .score-container {
-            background: #37474f;
-            padding: 5px 20px;
-            border-radius: 4px;
-            color: #fff;
-            font-weight: bold;
-            text-align: center;
-            min-width: 90px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            position: relative;
-            z-index: 50;
-            border: 1px solid var(--panel-border);
-            transition: border-color 0.2s;
+            background: #37474f; padding: 5px 20px; border-radius: 4px; color: #fff;
+            font-weight: bold; text-align: center; min-width: 90px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); position: relative; z-index: 50;
+            border: 1px solid var(--panel-border); transition: border-color 0.2s;
         }
         .score-title { font-size: 10px; text-transform: uppercase; display: block; color: #80deea;}
 
-        /* ESTILO DOS BOTÕES DE CONTROLE */
-        .controls-row {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            width: 100%;
-            margin-top: 15px;
-        }
-
+        /* BOTÕES DE CONTROLE */
+        .controls-row { display: flex; gap: 8px; justify-content: center; width: 100%; margin-top: 15px; }
         .btn-control {
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            color: white;
-            transition: all 0.2s;
-            box-shadow: 0 3px 0 rgba(0,0,0,0.3);
-            flex: 1; /* Divide espaço igualmente */
+            border: none; padding: 10px 10px; border-radius: 4px; cursor: pointer;
+            font-size: 13px; font-weight: bold; color: white; transition: all 0.2s;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.3); flex: 1; text-transform: uppercase;
         }
         .btn-control:active { transform: translateY(3px); box-shadow: none; }
         
         .btn-restart { background: #455a64; }
         .btn-restart:hover { background: #546e7a; }
-
         .btn-fx { background: #78909c; }
-        .btn-fx.active { background: #ef6c00; } /* Laranja quando ativo */
-        .btn-fx:hover { filter: brightness(1.1); }
-
-        #status-msg {
-            height: 20px;
-            font-size: 14px;
-            font-weight: bold;
-            color: var(--text-main);
-            margin-bottom: 5px;
-            text-align: center;
-            opacity: 0.8;
+        .btn-fx.active { background: #ef6c00; }
+        
+        /* BOTÃO CHAOTIC */
+        .btn-chaos { background: #4a148c; border: 1px solid #7c4dff; position: relative; overflow: hidden;}
+        .btn-chaos:hover { background: var(--chaos-bg); }
+        .btn-chaos.active { 
+            background: var(--chaos-bg); 
+            box-shadow: 0 0 25px var(--chaos-glow);
+            animation: chaosPulse 0.2s infinite alternate;
+            color: #fff;
+            border-color: #fff;
         }
+        @keyframes chaosPulse { from { transform: scale(1); } to { transform: scale(1.05); } }
 
-        /* --- COMBO UI --- */
-        .combo-panel {
-            width: 60px;
-            height: 550px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
-            margin: 0 5px;
-            position: relative;
-            transition: opacity 0.3s ease; /* Para suavizar o toggle */
+        #status-msg { height: 20px; font-size: 14px; font-weight: bold; color: var(--text-main); margin-bottom: 5px; text-align: center; opacity: 0.8; }
+
+        /* COMBO UI */
+        .combo-panel { width: 60px; height: 550px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; margin: 0 5px; position: relative; }
+        @media (max-width: 850px) { .combo-panel { width: 100%; height: 40px; flex-direction: row; order: 3; margin-top: 10px; } .combo-bar-container { width: 100% !important; height: 12px !important; } .combo-bar-fill { width: 0%; height: 100% !important; } }
+        .combo-display { font-family: 'Courier New', monospace; font-weight: 900; font-size: 24px; color: var(--text-main); text-align: center; margin-bottom: 10px; text-shadow: 0 0 5px rgba(255,255,255,0.3); min-height: 30px; z-index: 10; }
+        .combo-bar-container { width: 20px; height: 100%; background: rgba(0,0,0,0.2); border-radius: 10px; overflow: hidden; position: relative; box-shadow: inset 0 0 5px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
+        .combo-bar-fill { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background: linear-gradient(45deg, #ff00ff, #ff1744, #ff9100, #ff00ff); background-size: 400% 400%; animation: magmaFlow 2s ease infinite; box-shadow: 0 0 20px currentColor; transition: height 0.1s linear; }
+        @keyframes magmaFlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        /* GRID */
+        #grid-container { width: 85vmin; height: 85vmin; max-width: 550px; max-height: 550px; background-color: var(--grid-bg); border-radius: 8px; padding: 8px; display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); gap: 4px; box-sizing: border-box; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); touch-action: none; overflow: hidden; }
+        .grid-bg-layer { position: absolute; top: 8px; left: 8px; right: 8px; bottom: 8px; display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); gap: 4px; z-index: 0; pointer-events: none; }
+        .grid-slot { background-color: var(--empty-tile); border-radius: 4px; width: 100%; height: 100%; }
+
+        .tile {
+            grid-row-start: var(--row); grid-column-start: var(--col); grid-row-end: span 1; grid-column-end: span 1;
+            border-radius: 4px; display: flex; justify-content: center; align-items: center;
+            font-weight: bold; color: var(--text-dark); cursor: pointer;
+            box-shadow: 0 2px 2px rgba(0,0,0,0.2); z-index: 5;
+            will-change: transform; animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
         }
+        @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .tile.merged { animation: pulse 0.2s ease-in-out; z-index: 10; }
+        @keyframes pulse { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.15); filter: brightness(1.5); box-shadow: 0 0 15px var(--fx-lime); } 100% { transform: scale(1); filter: brightness(1); } }
+        .tile.selected { border: 2px solid var(--fx-pink); box-shadow: 0 0 15px var(--fx-pink); z-index: 20; transform: scale(0.95) !important; }
 
-        @media (max-width: 850px) {
-            .combo-panel {
-                width: 100%;
-                height: 40px;
-                flex-direction: row;
-                order: 3;
-                margin-top: 10px;
-            }
-            .combo-bar-container { width: 100% !important; height: 12px !important; }
-            .combo-bar-fill { width: 0%; height: 100% !important; }
+        /* VFX & DEBRIS */
+        .particle { position: absolute; width: 6px; height: 6px; border-radius: 50%; pointer-events: none; z-index: 100; animation: particle-anim 0.6s forwards ease-out; }
+        @keyframes particle-anim { 0% { transform: translate(0, 0) scale(1); opacity: 1; } 100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; } }
+
+        .debris {
+            position: fixed; pointer-events: none; z-index: 9999;
+            box-shadow: 0 0 15px currentColor;
+            animation: explodeFall 0.8s cubic-bezier(0.5, 0, 1, 1) forwards;
         }
-
-        .combo-display {
-            font-family: 'Courier New', monospace;
-            font-weight: 900;
-            font-size: 24px;
-            color: var(--text-main);
-            text-align: center;
-            margin-bottom: 10px;
-            text-shadow: 0 0 5px rgba(255,255,255,0.3);
-            min-height: 30px;
-            z-index: 10;
-        }
-
-        .combo-bar-container {
-            width: 20px;
-            height: 100%;
-            background: rgba(0,0,0,0.2);
-            border-radius: 10px;
-            overflow: hidden;
-            position: relative;
-            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.1);
+        @keyframes explodeFall {
+            0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+            15% { transform: translate(var(--dx-start), -60px) rotate(120deg) scale(1.5); opacity: 1; }
+            100% { transform: translate(var(--dx-end), 110vh) rotate(1080deg) scale(0.5); opacity: 0.8; }
         }
 
-        .combo-bar-fill {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 0%;
-            background: linear-gradient(45deg, #ff00ff, #ff1744, #ff9100, #ff00ff);
-            background-size: 400% 400%;
-            animation: magmaFlow 2s ease infinite;
-            box-shadow: 0 0 20px currentColor;
-            transition: height 0.1s linear;
-        }
-
-        @keyframes magmaFlow {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* SHAKE EFFECTS */
-        @keyframes shake-light { 
-            0% { transform: translate(0.5px, 0.5px) rotate(0deg); } 
-            50% { transform: translate(-0.5px, -0.5px) rotate(-0.5deg); } 
-            100% { transform: translate(0.5px, -0.5px) rotate(0deg); } 
-        }
-        @keyframes shake-med { 
-            0% { transform: translate(-1px, -1px) rotate(0.5deg); } 
-            50% { transform: translate(1px, 1px) rotate(-0.5deg); } 
-            100% { transform: translate(-1px, 1px) rotate(0deg); } 
-        }
-        @keyframes shake-hard { 
-            0% { transform: translate(-2px, -2px) rotate(-1deg); } 
-            25% { transform: translate(2px, 2px) rotate(1deg); } 
-            50% { transform: translate(-2px, 2px) rotate(-1deg); } 
-            75% { transform: translate(2px, -2px) rotate(1deg); } 
-            100% { transform: translate(0, 0) rotate(0); } 
-        }
-
+        /* SHAKE */
         .shake-light { animation: shake-light 0.2s ease-in-out infinite; }
         .shake-med { animation: shake-med 0.15s ease-in-out infinite; }
         .shake-hard { animation: shake-hard 0.1s ease-in-out infinite; }
-
-        /* GRID */
-        #grid-container {
-            width: 85vmin;
-            height: 85vmin;
-            max-width: 550px;
-            max-height: 550px;
-            background-color: var(--grid-bg);
-            border-radius: 8px;
-            padding: 8px;
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            grid-template-rows: repeat(8, 1fr);
-            gap: 4px;
-            box-sizing: border-box;
-            position: relative;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-            touch-action: none;
-            overflow: hidden;
-        }
-
-        .grid-bg-layer {
-            position: absolute;
-            top: 8px; left: 8px; right: 8px; bottom: 8px;
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            grid-template-rows: repeat(8, 1fr);
-            gap: 4px;
-            z-index: 0;
-            pointer-events: none;
-        }
-        .grid-slot {
-            background-color: var(--empty-tile);
-            border-radius: 4px;
-            width: 100%;
-            height: 100%;
-        }
-
-        .tile {
-            grid-row-start: var(--row);
-            grid-column-start: var(--col);
-            grid-row-end: span 1;
-            grid-column-end: span 1;
-            border-radius: 4px;
-            display: flex; justify-content: center; align-items: center;
-            font-weight: bold; color: var(--text-dark); cursor: pointer;
-            box-shadow: 0 2px 2px rgba(0,0,0,0.2); z-index: 5;
-            will-change: transform;
-            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
-        }
-
-        @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-
-        .tile.merged { animation: pulse 0.2s ease-in-out; z-index: 10; }
-        @keyframes pulse {
-            0% { transform: scale(1); filter: brightness(1); }
-            50% { transform: scale(1.15); filter: brightness(1.5); box-shadow: 0 0 15px var(--fx-lime); }
-            100% { transform: scale(1); filter: brightness(1); }
-        }
-
-        .tile.selected { border: 2px solid var(--fx-pink); box-shadow: 0 0 15px var(--fx-pink); z-index: 20; transform: scale(0.95) !important; }
-
-        .particle {
-            position: absolute; width: 6px; height: 6px; border-radius: 50%; pointer-events: none; z-index: 100;
-            animation: particle-anim 0.6s forwards ease-out;
-        }
-        @keyframes particle-anim {
-            0% { transform: translate(0, 0) scale(1); opacity: 1; }
-            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
-        }
+        @keyframes shake-light { 0% { transform: translate(0.5px, 0.5px); } 50% { transform: translate(-0.5px, -0.5px); } 100% { transform: translate(0.5px, -0.5px); } }
+        @keyframes shake-med { 0% { transform: translate(-1px, -1px); } 50% { transform: translate(1px, 1px); } 100% { transform: translate(-1px, 1px); } }
+        @keyframes shake-hard { 0% { transform: translate(-2px, -2px); } 25% { transform: translate(2px, 2px); } 50% { transform: translate(-2px, 2px); } 75% { transform: translate(2px, -2px); } 100% { transform: translate(0, 0); } }
 
         /* CORES */
         .tile[data-val="2"]    { background: #e0f7fa; color: #263238; }
@@ -317,62 +159,32 @@
         .tile.high-tier { background: #000; color: #00e5ff; font-size: 12px; border: 1px solid #00e5ff; box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.3), 0 0 10px #00e5ff; text-shadow: 0 0 5px #00e5ff; }
 
         /* SIDEBAR */
-        .sidebar {
-            background: var(--sidebar-bg); width: 240px; padding: 20px; border-radius: 8px;
-            display: flex; flex-direction: column; gap: 0;
-            box-shadow: 5px 5px 15px rgba(0,0,0,0.4); border-top: 3px solid #37474f;
-        }
+        .sidebar { background: var(--sidebar-bg); width: 240px; padding: 20px; border-radius: 8px; display: flex; flex-direction: column; gap: 0; box-shadow: 5px 5px 15px rgba(0,0,0,0.4); border-top: 3px solid #37474f; }
         #security-panel { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-        .security-screen {
-            background: var(--screen-bg); color: var(--screen-text); font-family: "Courier New", monospace;
-            padding: 10px; border-radius: 4px; text-align: right; font-size: 18px; height: 35px;
-            display: flex; align-items: center; justify-content: flex-end; border: 1px solid #444;
-            box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.1); letter-spacing: 2px;
-        }
+        .security-screen { background: var(--screen-bg); color: var(--screen-text); font-family: "Courier New", monospace; padding: 10px; border-radius: 4px; text-align: right; font-size: 18px; height: 35px; display: flex; align-items: center; justify-content: flex-end; border: 1px solid #444; box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.1); letter-spacing: 2px; }
         .keypad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .key-btn {
-            background: var(--keypad-btn); color: #cfd8dc; font-size: 18px; padding: 15px 0; border-radius: 4px;
-            text-align: center; font-family: monospace; transition: background 0.1s; box-shadow: none;
-        }
+        .key-btn { background: var(--keypad-btn); color: #cfd8dc; font-size: 18px; padding: 15px 0; border-radius: 4px; text-align: center; font-family: monospace; transition: background 0.1s; box-shadow: none; }
         .key-btn:hover { background: var(--keypad-btn-hover); }
         .key-btn:active { background: #00bcd4; color: #000; transform: translateY(2px); }
         .bottom-bar { display: flex; gap: 6px; margin-top: 6px; }
         .btn-zero { flex: 1; background: var(--keypad-btn); }
         .btn-enter { flex: 2; background: #b71c1c; font-size: 14px; font-weight: bold; color: #fff; }
-
-        #god-panel {
-            display: none; flex-direction: column; gap: 12px; background: #263238; padding: 10px;
-            border-radius: 5px; border: 1px solid #00e5ff; animation: slideDown 0.5s; margin-top: 15px;
-        }
+        #god-panel { display: none; flex-direction: column; gap: 12px; background: #263238; padding: 10px; border-radius: 5px; border: 1px solid #00e5ff; animation: slideDown 0.5s; margin-top: 15px; }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .god-label { color: #80deea; font-size: 12px; margin-bottom: 2px; text-transform: uppercase;}
         select { width: 100%; padding: 8px; background: #37474f; border: 1px solid #546e7a; color: #fff; border-radius: 3px; }
         .swap-toggle { background: #455a64; width: 100%; text-align: left; position: relative; padding-left: 40px; }
-        .swap-toggle::before {
-            content: ''; position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
-            width: 12px; height: 12px; border-radius: 50%; background: #cfd8dc; box-shadow: 0 0 5px #cfd8dc;
-        }
+        .swap-toggle::before { content: ''; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; border-radius: 50%; background: #cfd8dc; box-shadow: 0 0 5px #cfd8dc; }
         .swap-toggle.active { background: #2e3b40; border: 1px solid #00c853; color: #00c853;}
         .swap-toggle.active::before { background: #00c853; box-shadow: 0 0 8px #00c853; }
 
         /* GAME OVER */
-        .game-over-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(18, 18, 18, 0.95); z-index: 100;
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; color: var(--screen-text); animation: fadeIn 0.5s ease-in-out;
-            backdrop-filter: blur(4px);
-        }
+        .game-over-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 18, 18, 0.95); z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--screen-text); animation: fadeIn 0.5s ease-in-out; backdrop-filter: blur(4px); }
         .game-over-overlay h2 { font-size: 40px; margin: 0 0 10px 0; text-shadow: 0 0 10px var(--screen-text); font-family: "Courier New", monospace; color: #ff1744; }
         .game-over-overlay button { background-color: var(--powerup-active); box-shadow: 0 0 15px var(--powerup-active); font-size: 18px; padding: 12px 24px; border:none; color:white; border-radius:4px; font-weight:bold; cursor:pointer; margin-top: 20px; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .btn-reroll-action {
-            width: 100%; background: var(--reroll-bg); color: #fff; border: none; border-radius: 6px; padding: 15px 0;
-            font-size: 16px; font-weight: bold; font-family: monospace; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-            box-shadow: 0 4px 0 rgba(0,0,0,0.3); transition: all 0.1s ease;
-        }
+        .btn-reroll-action { width: 100%; background: var(--reroll-bg); color: #fff; border: none; border-radius: 6px; padding: 15px 0; font-size: 16px; font-weight: bold; font-family: monospace; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 0 rgba(0,0,0,0.3); transition: all 0.1s ease; }
         .btn-reroll-action:hover { background: var(--reroll-hover); }
         .btn-reroll-action:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.3); }
         .btn-reroll-action svg { width: 22px; height: 22px; fill: currentColor; }
@@ -386,7 +198,7 @@
         <div class="header">
             <div>
                 <h1>Ultra 2048</h1>
-                <div style="font-size: 12px; color: #546e7a;">Grid 8x8 | Control FX</div>
+                <div style="font-size: 12px; color: #546e7a;">Grid 8x8 | Total Chaos</div>
             </div>
             <div class="score-container">
                 <span class="score-title">Score</span>
@@ -408,8 +220,9 @@
         </div>
         
         <div class="controls-row">
-            <button class="btn-control btn-restart" onclick="initGame()">Reiniciar</button>
+            <button class="btn-control btn-restart" onclick="initGame()">Restart</button>
             <button id="btn-fx" class="btn-control btn-fx active" onclick="toggleFX()">FX: ON</button>
+            <button id="btn-chaos" class="btn-control btn-chaos" onclick="toggleChaotic()">CHAOS</button>
         </div>
         
         <div style="margin-top: 15px; text-align: center; width: 100%;">
@@ -483,13 +296,17 @@
     let inputBuffer = "";
     const SECRET_CODE = "12345678900";
 
-    // Combo & VFX Variables
+    // FX & Combo
     let comboScore = 0;
     let comboEndTime = 0;
     let lastMergeTime = Date.now();
     let comboRequestFrame = null;
     let currentIntensity = 0;
-    let isFxEnabled = true; // Toggle para os efeitos
+    let isFxEnabled = true;
+
+    // Chaotic Mode
+    let isChaoticMode = false;
+    let chaoticInterval = null;
 
     const tileColors = ['#e0f7fa', '#b2ebf2', '#80deea', '#4dd0e1', '#26c6da', '#00bcd4', '#039be5', '#0288d1', '#0277bd', '#3949ab', '#5e35b1', '#8e24aa', '#ad1457'];
 
@@ -507,7 +324,6 @@
     function initGame() {
         document.getElementById('game-over-overlay').style.display = 'none';
         
-        // Reset Visual
         if(isFxEnabled) {
             document.body.style.backgroundColor = 'var(--bg-color)';
             document.body.classList.remove('dark-mode');
@@ -520,10 +336,15 @@
         currentIntensity = 0;
         updateComboUI();
 
+        // Reset Chaotic
+        isChaoticMode = false;
+        if(chaoticInterval) clearInterval(chaoticInterval);
+        document.getElementById('btn-chaos').classList.remove('active');
+
         const container = document.getElementById('grid-container');
         const tiles = container.querySelectorAll('.tile');
         tiles.forEach(t => t.remove());
-        document.querySelectorAll('.particle').forEach(p => p.remove());
+        document.querySelectorAll('.particle, .debris').forEach(p => p.remove());
 
         resetModes();
         addNewTile();
@@ -536,7 +357,92 @@
         updateComboLoop();
     }
 
-    // --- TOGGLE FX LOGIC ---
+    // --- CHAOTIC LOGIC ---
+    function toggleChaotic() {
+        isChaoticMode = !isChaoticMode;
+        const btn = document.getElementById('btn-chaos');
+        
+        if(isChaoticMode) {
+            btn.classList.add('active');
+            chaoticInterval = setInterval(destroyLeastActiveTile, 2000);
+        } else {
+            btn.classList.remove('active');
+            clearInterval(chaoticInterval);
+        }
+    }
+
+    function destroyLeastActiveTile() {
+        if(!isChaoticMode) return;
+
+        let maxStatic = -1;
+        let target = null;
+        let targetPos = null;
+
+        for(let r=0; r<gridSize; r++) {
+            for(let c=0; c<gridSize; c++) {
+                if(board[r][c] !== null) {
+                    if(board[r][c].staticCount > maxStatic) {
+                        maxStatic = board[r][c].staticCount;
+                        target = board[r][c];
+                        targetPos = {r,c};
+                    }
+                }
+            }
+        }
+
+        if(target && targetPos) {
+            // Efeito visual forte independente do FX global
+            spawnDebris(targetPos.r, targetPos.c, target.val, true);
+            board[targetPos.r][targetPos.c] = null;
+            drawBoard();
+            
+            // CORREÇÃO GAME OVER NO MODO CAÓTICO
+            if(checkGameOver()) {
+                document.getElementById('final-score').innerText = score;
+                document.getElementById('game-over-overlay').style.display = 'flex';
+                toggleChaotic(); // Para o caos
+            }
+        }
+    }
+
+    function spawnDebris(r, c, val, force = false) {
+        if(!isFxEnabled && !force && !isChaoticMode) return;
+
+        const container = document.body; 
+        const rectGrid = document.getElementById('grid-container').getBoundingClientRect();
+        
+        const cellW = (rectGrid.width - 16) / gridSize;
+        const cellH = (rectGrid.height - 16) / gridSize;
+        const startX = rectGrid.left + 8 + (c * cellW) + (cellW / 2);
+        const startY = rectGrid.top + 8 + (r * cellH) + (cellH / 2);
+
+        const colorIdx = Math.max(0, Math.min(Math.floor(Math.log2(val)) - 1, tileColors.length - 1));
+        const color = tileColors[colorIdx] || '#fff';
+
+        for(let i=0; i<12; i++) {
+            const deb = document.createElement('div');
+            deb.className = 'debris';
+            deb.style.backgroundColor = color;
+            deb.style.left = startX + 'px';
+            deb.style.top = startY + 'px';
+            
+            const size = 10 + Math.random() * 15;
+            deb.style.width = size + 'px';
+            deb.style.height = size + 'px';
+            deb.style.color = color; // Glow color
+
+            const dxStart = (Math.random() - 0.5) * 100 + 'px';
+            const dxEnd = (Math.random() - 0.5) * 400 + 'px';
+            
+            deb.style.setProperty('--dx-start', dxStart);
+            deb.style.setProperty('--dx-end', dxEnd);
+            
+            container.appendChild(deb);
+            setTimeout(() => deb.remove(), 1000);
+        }
+    }
+
+    // --- TOGGLE FX ---
     function toggleFX() {
         isFxEnabled = !isFxEnabled;
         const btn = document.getElementById('btn-fx');
@@ -550,23 +456,20 @@
         } else {
             btn.innerHTML = "FX: OFF";
             btn.classList.remove('active');
-            
-            // Desliga tudo imediatamente
             panel.style.opacity = "0";
             document.body.style.backgroundColor = 'var(--bg-color)';
             document.body.classList.remove('dark-mode');
-            wrapper.className = "game-wrapper"; // Remove shake
+            wrapper.className = "game-wrapper"; 
         }
     }
 
-    // --- COMBO & INTENSITY LOOP ---
+    // --- COMBO LOOP ---
     function updateComboLoop() {
         const now = Date.now();
         const timeLeft = Math.max(0, comboEndTime - now);
         
-        // Se FX desligado, apenas mantém loop sem calcular visual
         if(!isFxEnabled) {
-            if (timeLeft <= 0 && comboScore > 0) comboScore = 0; // Ainda reseta score lógico
+            if (timeLeft <= 0 && comboScore > 0) comboScore = 0;
             comboRequestFrame = requestAnimationFrame(updateComboLoop);
             return;
         }
@@ -575,11 +478,9 @@
         const percentage = (timeLeft / 4000); 
         barFill.style.height = (percentage * 100) + '%';
         
-        // Intensity Logic
         let scoreFactor = Math.min(comboScore / 3000, 1);
         let targetIntensity = scoreFactor * percentage;
         
-        // Suavização do cooldown (Cool Down)
         if (targetIntensity < currentIntensity) {
             document.body.style.transition = 'background-color 3s ease, color 3s ease';
         } else {
@@ -598,7 +499,7 @@
 
         if (timeLeft <= 0 && comboScore > 0) {
             comboScore = 0;
-            updateComboUI(); // Limpa texto e shake
+            updateComboUI(); 
         }
 
         comboRequestFrame = requestAnimationFrame(updateComboLoop);
@@ -627,7 +528,6 @@
 
     function updateComboUI() {
         const display = document.getElementById('combo-display');
-        const barFill = document.getElementById('combo-bar-fill');
         const wrapper = document.querySelector('.game-wrapper');
         
         if(comboScore > 0) {
@@ -642,7 +542,7 @@
                 else if(comboScore > 200) wrapper.classList.add('shake-light');
             }
         } else {
-            display.innerText = "0"; // MOSTRA 0 SE NÃO HOUVER COMBO
+            display.innerText = "0"; 
             display.style.color = "var(--text-main)";
             wrapper.className = "game-wrapper";
         }
@@ -661,7 +561,7 @@
     });
 
     function spawnParticles(r, c, type) {
-        if(!isFxEnabled) return; // Não gera partículas se desligado
+        if(!isFxEnabled && !isChaoticMode) return;
 
         const container = document.getElementById('grid-container');
         const rect = container.getBoundingClientRect();
@@ -671,8 +571,12 @@
         const startY = 8 + (r * cellH) + (cellH / 2);
 
         let colors = [], count = 0;
-        if (type === 'merge') { colors = ['var(--fx-pink)', 'var(--fx-orange)', 'var(--fx-lime)', '#00e5ff']; count = 12; } 
-        else if (type === 'spawn') { colors = ['var(--fx-spawn)', '#ffffff']; count = 6; }
+        if (type === 'merge') { 
+            colors = ['var(--fx-pink)', 'var(--fx-orange)', 'var(--fx-lime)', '#00e5ff']; 
+            count = isChaoticMode ? 36 : 12; // 3x Particles in Chaos
+        } else if (type === 'spawn') { 
+            colors = ['var(--fx-spawn)', '#ffffff']; count = 6; 
+        }
 
         for(let i=0; i<count; i++) {
             const p = document.createElement('div');
@@ -681,7 +585,7 @@
             p.style.left = startX + 'px';
             p.style.top = startY + 'px';
             const angle = Math.random() * Math.PI * 2;
-            const dist = 25 + Math.random() * 30;
+            const dist = (25 + Math.random() * 30) * (isChaoticMode ? 2 : 1);
             const tx = Math.cos(angle) * dist;
             const ty = Math.sin(angle) * dist;
             p.style.setProperty('--tx', `${tx}px`);
@@ -698,7 +602,7 @@
         }
         if(emptyTiles.length > 0){
             let rand = emptyTiles[Math.floor(Math.random() * emptyTiles.length)];
-            board[rand.r][rand.c] = { val: Math.random() < 0.9 ? 2 : 4, id: nextTileId++ };
+            board[rand.r][rand.c] = { val: Math.random() < 0.9 ? 2 : 4, id: nextTileId++, staticCount: 0 };
             setTimeout(() => spawnParticles(rand.r, rand.c, 'spawn'), 50);
         }
     }
@@ -735,7 +639,7 @@
         let scoreAdded = 0; let mergeCount = 0;
         for (let i = 0; i < gridSize - 1; i++) {
             if (row[i] !== null && row[i+1] !== null && row[i].val === row[i+1].val) {
-                row[i] = { val: row[i].val * 2, id: nextTileId++, merged: true };
+                row[i] = { val: row[i].val * 2, id: nextTileId++, merged: true, staticCount: 0 };
                 row[i+1] = null;
                 let s = row[i].val;
                 score += s;
@@ -748,6 +652,11 @@
     }
 
     function moveLeft() {
+        // Increment static count
+        for(let r=0; r<gridSize; r++) 
+            for(let c=0; c<gridSize; c++) 
+                if(board[r][c]) board[r][c].staticCount++;
+
         let moved = false;
         let totalScore = 0; let totalMerge = 0;
         for (let r = 0; r < gridSize; r++) {
@@ -759,7 +668,10 @@
             row = slide(row);
             board[r] = row;
             let newIds = board[r].map(t => t ? t.id : 'x').join(',');
-            if(oldIds !== newIds) moved = true;
+            if(oldIds !== newIds) {
+                moved = true;
+                board[r].forEach(t => { if(t) t.staticCount = 0; });
+            }
         }
         if(totalMerge > 0) addCombo(totalScore, totalMerge);
         return moved;
@@ -844,11 +756,21 @@
     }
 
     function checkGameOver() {
+        let count = 0;
+        let hasEmpty = false;
         for(let r=0; r<gridSize; r++) {
             for(let c=0; c<gridSize; c++) {
-                if(board[r][c] === null) return false;
-                if(c < gridSize - 1 && board[r][c+1] !== null && board[r][c].val === board[r][c+1].val) return false;
-                if(r < gridSize - 1 && board[r+1][c] !== null && board[r][c].val === board[r+1][c].val) return false;
+                if(board[r][c] !== null) count++;
+                else hasEmpty = true;
+            }
+        }
+        if(count < 2) return true; // Regra dos 2 tiles
+        if(hasEmpty) return false;
+
+        for(let r=0; r<gridSize; r++) {
+            for(let c=0; c<gridSize; c++) {
+                if(c < gridSize - 1 && board[r][c].val === board[r][c+1].val) return false;
+                if(r < gridSize - 1 && board[r][c].val === board[r+1][c].val) return false;
             }
         }
         return true;
@@ -883,9 +805,14 @@
                 if(currentCell !== null) { board[r][c] = null; drawBoard(); }
             } else {
                 if(currentCell === null) { 
-                    board[r][c] = { val: godPlacementValue, id: nextTileId++ }; 
+                    board[r][c] = { val: godPlacementValue, id: nextTileId++, staticCount: 0 }; 
                     spawnParticles(r, c, 'spawn'); drawBoard(); 
                 }
+            }
+            // Check Game Over after god action
+            if(checkGameOver()) {
+                document.getElementById('final-score').innerText = score;
+                document.getElementById('game-over-overlay').style.display = 'flex';
             }
             return;
         }
