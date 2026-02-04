@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="Gemini_Generated_Image_r2nga0r2nga0r2ng-removebg-preview.png" type="image/x-icon">
-    <title>Ultra 2048 - Safe Smooth</title>
+    <title>Ultra 2048 - Final Layout</title>
     <style>
         :root {
             /* PALETA FRIA (CRYO) */
@@ -21,6 +21,10 @@
             --keypad-btn: #37474f;
             --keypad-btn-hover: #455a64;
             --powerup-active: #00c853;
+            
+            /* Botão Reroll */
+            --reroll-bg: #0097a7; /* Ciano escuro para destaque */
+            --reroll-hover: #00acc1;
         }
 
         body {
@@ -151,10 +155,7 @@
             cursor: pointer;
             box-shadow: 0 2px 2px rgba(0,0,0,0.2);
             z-index: 5;
-            
-            /* Apenas transform e opacity são animados para garantir performance */
             will-change: transform;
-            /* Animação de criação */
             animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
         }
 
@@ -199,9 +200,15 @@
         /* SIDEBAR & UI */
         .sidebar {
             background: var(--sidebar-bg); width: 240px; padding: 20px; border-radius: 8px;
-            display: flex; flex-direction: column; gap: 15px;
+            display: flex; flex-direction: column; gap: 0; /* Removido gap global para controlar manualmente */
             box-shadow: 5px 5px 15px rgba(0,0,0,0.4); border-top: 3px solid #37474f;
         }
+        
+        #security-panel {
+            display: flex; flex-direction: column; gap: 10px;
+            margin-bottom: 20px; /* Espaço para o botão reroll */
+        }
+
         .security-screen {
             background: var(--screen-bg); color: var(--screen-text); font-family: "Courier New", monospace;
             padding: 10px; border-radius: 4px; text-align: right; font-size: 18px; height: 35px;
@@ -211,17 +218,18 @@
         .keypad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
         .key-btn {
             background: var(--keypad-btn); color: #cfd8dc; font-size: 18px; padding: 15px 0; border-radius: 4px;
-            text-align: center; font-family: monospace; transition: background 0.1s;
+            text-align: center; font-family: monospace; transition: background 0.1s; box-shadow: none;
         }
         .key-btn:hover { background: var(--keypad-btn-hover); }
-        .key-btn:active { background: #00bcd4; color: #000; }
-        .bottom-bar { display: flex; gap: 6px; }
+        .key-btn:active { background: #00bcd4; color: #000; transform: translateY(2px); }
+        .bottom-bar { display: flex; gap: 6px; margin-top: 6px; }
         .btn-zero { flex: 1; background: var(--keypad-btn); }
         .btn-enter { flex: 2; background: #b71c1c; font-size: 14px; font-weight: bold; color: #fff; }
 
         #god-panel {
             display: none; flex-direction: column; gap: 12px; background: #263238; padding: 10px;
             border-radius: 5px; border: 1px solid #00e5ff; animation: slideDown 0.5s;
+            margin-top: 15px;
         }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .god-label { color: #80deea; font-size: 12px; margin-bottom: 2px; text-transform: uppercase;}
@@ -244,6 +252,35 @@
         .game-over-overlay h2 { font-size: 40px; margin: 0 0 10px 0; text-shadow: 0 0 10px var(--screen-text); font-family: "Courier New", monospace; }
         .game-over-overlay button { background-color: var(--powerup-active); box-shadow: 0 0 15px var(--powerup-active); font-size: 18px; padding: 12px 24px; border:none; color:white; border-radius:4px; font-weight:bold; cursor:pointer;}
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- BOTÃO REROLL INDEPENDENTE --- */
+        .btn-reroll-action {
+            width: 100%;
+            background: var(--reroll-bg);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 15px 0; /* Botão mais alto */
+            font-size: 16px;
+            font-weight: bold;
+            font-family: monospace;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.3); /* Sombra sólida para profundidade */
+            transition: all 0.1s ease;
+        }
+        
+        .btn-reroll-action:hover { background: var(--reroll-hover); }
+        .btn-reroll-action:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.3); }
+        
+        .btn-reroll-action svg {
+            width: 22px;
+            height: 22px;
+            fill: currentColor;
+        }
 
     </style>
 </head>
@@ -284,7 +321,7 @@
     <div class="sidebar">
         <div id="security-panel">
             <div class="security-screen" id="display-screen">LOCKED</div>
-            <div class="keypad-grid" style="margin-top: 10px;">
+            <div class="keypad-grid">
                 <button class="key-btn" onclick="pressKey('1')">1</button>
                 <button class="key-btn" onclick="pressKey('2')">2</button>
                 <button class="key-btn" onclick="pressKey('3')">3</button>
@@ -295,11 +332,18 @@
                 <button class="key-btn" onclick="pressKey('8')">8</button>
                 <button class="key-btn" onclick="pressKey('9')">9</button>
             </div>
-            <div class="bottom-bar" style="margin-top: 6px;">
+            <div class="bottom-bar">
                 <button class="key-btn btn-zero" onclick="pressKey('0')">0</button>
                 <button class="key-btn btn-enter" id="btn-enter" onclick="checkPassword()">ENTER</button>
             </div>
         </div>
+        
+        <button class="btn-reroll-action" onclick="rerollBoard()" title="Reroll (Bagunçar)">
+            <svg viewBox="0 0 24 24">
+                <path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/>
+            </svg>
+            REROLL
+        </button>
 
         <div id="god-panel">
             <div style="text-align: center; color: #00e5ff; font-weight: bold; border-bottom: 1px solid #00e5ff; padding-bottom:5px;">SYSTEM OVERRIDE</div>
@@ -377,6 +421,40 @@
         }
     }
 
+    // --- FUNÇÃO DE REROLL (SEM ANIMAÇÃO INTERNA) ---
+    function rerollBoard() {
+        let currentTiles = [];
+        for(let r=0; r<gridSize; r++) {
+            for(let c=0; c<gridSize; c++) {
+                if(board[r][c] !== null) {
+                    currentTiles.push(board[r][c]);
+                    board[r][c] = null;
+                }
+            }
+        }
+
+        if(currentTiles.length === 0) return;
+
+        let allPositions = [];
+        for(let r=0; r<gridSize; r++) {
+            for(let c=0; c<gridSize; c++) allPositions.push({r, c});
+        }
+
+        for (let i = allPositions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [allPositions[i], allPositions[j]] = [allPositions[j], allPositions[i]];
+        }
+
+        currentTiles.forEach((tile, index) => {
+            let pos = allPositions[index];
+            board[pos.r][pos.c] = tile;
+        });
+
+        // Apenas redesenha (o FLIP cuidará de mover as peças no grid)
+        drawBoard();
+    }
+
+
     function slide(row) {
         let arr = row.filter(t => t !== null);
         let missing = gridSize - arr.length;
@@ -418,23 +496,21 @@
         board = newBoard;
     }
 
-    // --- ENGINE SEGURA COM FLIP (ANIMAÇÃO SEM QUEBRAR LAYOUT) ---
+    // --- ENGINE SEGURA COM FLIP ---
     function drawBoard() {
         const container = document.getElementById('grid-container');
         
-        // 1. Mapeia tiles existentes e pega posição ATUAL (rect)
         const existingTiles = {};
         const oldRects = {};
         
         container.querySelectorAll('.tile').forEach(el => {
             const id = el.getAttribute('data-id');
             existingTiles[id] = el;
-            oldRects[id] = el.getBoundingClientRect(); // Grava onde estava
+            oldRects[id] = el.getBoundingClientRect();
         });
 
         const activeIds = new Set();
 
-        // 2. Atualiza o DOM e Layout (CSS Grid move as peças instantaneamente aqui)
         for(let r=0; r<gridSize; r++){
             for(let c=0; c<gridSize; c++){
                 let tileData = board[r][c];
@@ -448,10 +524,8 @@
                         el.className = 'tile';
                         el.setAttribute('data-id', tileData.id);
                         container.appendChild(el);
-                        // Novos tiles não têm oldRect, então apenas "popIn" (CSS Animation)
                     }
 
-                    // Atualiza Estado
                     el.innerText = tileData.val;
                     if(tileData.val > 10000) el.classList.add('high-tier');
                     else el.setAttribute('data-val', tileData.val);
@@ -460,11 +534,9 @@
                     else if (tileData.val > 9999) el.style.fontSize = "14px";
                     else el.style.fontSize = "18px";
 
-                    // POSICIONAMENTO SEGURO (GRID)
                     el.style.setProperty('--row', r + 1);
                     el.style.setProperty('--col', c + 1);
 
-                    // Animação de fusão
                     if(tileData.merged) {
                         el.classList.add('merged');
                         setTimeout(() => { if(el) el.classList.remove('merged'); }, 300);
@@ -488,33 +560,22 @@
             }
         }
 
-        // 3. Remove tiles mortos
         for(let id in existingTiles) {
             if(!activeIds.has(id)) existingTiles[id].remove();
         }
 
-        // 4. APLICA O TRUQUE DO FLIP PARA ANIMAR O DESLIZE
-        // O browser já calculou a nova posição no grid no passo 2.
         activeIds.forEach(id => {
             const el = existingTiles[id];
             const oldRect = oldRects[id];
             
-            // Só anima se a peça JÁ existia
             if (el && oldRect) {
-                const newRect = el.getBoundingClientRect(); // Pega nova posição
-                
-                // Calcula a diferença
+                const newRect = el.getBoundingClientRect();
                 const dx = oldRect.left - newRect.left;
                 const dy = oldRect.top - newRect.top;
 
-                // Se houve movimento visual
                 if (dx !== 0 || dy !== 0) {
-                    // INVERT: Coloca a peça visualmente onde ela estava antes (sem transition)
                     el.style.transition = 'none';
                     el.style.transform = `translate(${dx}px, ${dy}px)`;
-
-                    // PLAY: Remove o transform para ela deslizar para a nova posição
-                    // requestAnimationFrame garante que o browser renderizou o passo acima
                     requestAnimationFrame(() => {
                         el.style.transition = 'transform 0.15s ease-in-out';
                         el.style.transform = '';
@@ -549,7 +610,6 @@
 
         if (moved) {
             addNewTile();
-            // Pequeno delay para garantir que o DOM esteja pronto para a lógica FLIP
             requestAnimationFrame(() => {
                 drawBoard(); 
                 updateScore(); 
