@@ -1,1531 +1,1015 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="Gemini_Generated_Image_r2nga0r2nga0r2ng-removebg-preview.png" type="image/x-icon">
-    <title>Ultra 2048 - 8x8 Edition</title>
+    <title>Ultra 2048 - 8x8 LOCKED SHOT</title>
     <style>
         :root {
-            /* COOL PALETTE (BASE) */
-            --bg-color: #e3f1f0;
-            --grid-bg: #263238;
-            --empty-tile: #546e7a;
-            --text-main: #263238;
-
+            /* PALETTE */
+            --bg-color: #e3f1f0; --grid-bg: #263238; --empty-tile: #546e7a; --text-main: #263238; 
             /* UI */
-            --sidebar-bg: #212121;
-            --screen-bg: #000;
-            --screen-text: #00e5ff;
-            --keypad-btn: #37474f;
-            --keypad-btn-hover: #455a64;
-            --powerup-active: #00c853;
-            --panel-border: #37474f;
-
-            /* Buttons */
-            --reroll-bg: #0097a7;
-            --reroll-hover: #00acc1;
-            --chaos-bg: #6200ea;
-            --chaos-glow: #d500f9;
-
+            --sidebar-bg: #212121; --screen-bg: #000; --screen-text: #00e5ff;
+            --keypad-btn: #37474f; --keypad-btn-hover: #455a64; --powerup-active: #00c853; --panel-border: #37474f;
+            /* BUTTONS */
+            --reroll-bg: #0097a7; --reroll-hover: #00acc1;
+            --shot-bg: #d84315; --shot-hover: #f4511e;
+            --chaos-bg: #6200ea; --chaos-glow: #d500f9;
             /* VFX */
-            --fx-pink: #ff00ff;
-            --fx-orange: #ff9100;
-            --fx-lime: #76ff03;
-            --fx-spawn: #e0f7fa;
+            --fx-pink: #ff4081; --fx-orange: #ffab40; --fx-lime: #76ff03; --fx-cyan: #00e5ff; --fx-spawn: #ffffff; 
         }
 
-        body.dark-mode {
-            --text-main: #e0f7fa;
-            --panel-border: #ff1744;
-        }
+        body.dark-mode { --text-main: #e0f7fa; --panel-border: #ff1744; }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
+            background-color: var(--bg-color); color: var(--text-main);
             font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            user-select: none;
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding-bottom: 20px;
-            transition: color 0.2s ease;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; margin: 0; user-select: none;
+            overflow-y: auto; overflow-x: hidden; padding-bottom: 20px;
+            transition: color 0.1s ease;
         }
 
-        /* LAYOUT */
-        .game-wrapper {
-            display: flex;
-            align-items: flex-start;
-            gap: 15px;
-            padding: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-            position: relative;
+        /* OTIMIZAÇÃO GPU */
+        .tile, .particle, .debris, .game-wrapper {
+            will-change: transform, opacity;
+            backface-visibility: hidden;
+            transform-style: preserve-3d;
         }
 
-        .game-column {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+        /* Glitch Effect */
+        body.glitch-mode h1, body.glitch-mode .combo-display { text-shadow: 2px 0 var(--fx-pink), -2px 0 var(--fx-cyan); }
 
-        h1 {
-            margin: 0 0 5px 0;
-            font-size: 36px;
-            color: var(--text-main);
-            font-weight: 800;
-            letter-spacing: -1px;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            max-width: 550px;
-            align-items: center;
-            margin-bottom: 10px;
-        }
+        .game-wrapper { display: flex; align-items: flex-start; gap: 15px; padding: 10px; flex-wrap: wrap; justify-content: center; position: relative; }
+        .game-column { display: flex; flex-direction: column; align-items: center; }
+        h1 { margin: 0 0 5px 0; font-size: 36px; color: var(--text-main); font-weight: 800; letter-spacing: -1px; transition: all 0.2s;}
+        .header { display: flex; justify-content: space-between; width: 100%; max-width: 550px; align-items: center; margin-bottom: 10px; }
 
         .score-container {
-            background: #37474f;
-            padding: 5px 20px;
-            border-radius: 4px;
-            color: #fff;
-            font-weight: bold;
-            text-align: center;
-            min-width: 90px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            position: relative;
-            z-index: 50;
-            border: 1px solid var(--panel-border);
-            transition: border-color 0.2s;
+            background: #37474f; padding: 5px 20px; border-radius: 4px; color: #fff;
+            font-weight: bold; text-align: center; min-width: 90px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); position: relative; z-index: 50;
+            border: 1px solid var(--panel-border); transition: border-color 0.2s;
+        }
+        .score-title { font-size: 10px; text-transform: uppercase; display: block; color: #80deea;}
+
+        .controls-row { display: flex; gap: 8px; justify-content: center; width: 100%; margin-top: 15px; }
+        .btn-control, .btn-link {
+            border: none; padding: 10px 10px; border-radius: 4px; cursor: pointer;
+            font-size: 12px; font-weight: bold; color: white; transition: all 0.1s;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.3); flex: 1; text-transform: uppercase;
+            text-decoration: none; display: flex; align-items: center; justify-content: center; text-align: center; font-family: inherit;
+        }
+        .btn-control:active, .btn-link:active { transform: translateY(3px); box-shadow: none; }
+        .btn-restart { background: #455a64; } .btn-restart:hover { background: #546e7a; }
+        .btn-fx { background: #78909c; } .btn-fx.active { background: #ef6c00; }
+        .btn-mode { background: #00838f; border: 1px solid #00acc1; } .btn-mode:hover { background: #00acc1; }
+        .btn-chaos { background: #4a148c; border: 1px solid #7c4dff; }
+        .btn-chaos.active { background: var(--chaos-bg); box-shadow: 0 0 25px var(--chaos-glow); animation: chaosPulse 0.1s infinite alternate; color: #fff; border-color: #fff; }
+        @keyframes chaosPulse { from { transform: scale(1) hue-rotate(0deg); } to { transform: scale(1.05) hue-rotate(90deg); } }
+
+        #status-msg { height: 20px; font-size: 14px; font-weight: bold; color: var(--text-main); margin-bottom: 5px; text-align: center; opacity: 0.8; }
+
+        .combo-panel { width: 60px; height: 550px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; margin: 0 5px; position: relative; transition: opacity 0.3s; }
+        @media (max-width: 850px) { .combo-panel { width: 100%; height: 40px; flex-direction: row; order: 3; margin-top: 10px; } .combo-bar-container { width: 100% !important; height: 12px !important; } .combo-bar-fill { width: 0%; height: 100% !important; } }
+        .combo-display { font-family: 'Courier New', monospace; font-weight: 900; font-size: 24px; color: var(--text-main); text-align: center; margin-bottom: 10px; text-shadow: 0 0 5px rgba(255,255,255,0.3); min-height: 30px; z-index: 10; }
+        .combo-bar-container { width: 20px; height: 100%; background: rgba(0,0,0,0.2); border-radius: 10px; overflow: hidden; position: relative; box-shadow: inset 0 0 5px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
+        .combo-bar-fill { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background: linear-gradient(45deg, #ff00ff, #ff1744, #ff9100, #ff00ff); background-size: 400% 400%; animation: magmaFlow 2s ease infinite; box-shadow: 0 0 20px currentColor; transition: height 0.1s linear; }
+        @keyframes magmaFlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        #grid-container { 
+            width: 85vmin; height: 85vmin; max-width: 550px; max-height: 550px; 
+            background-color: var(--grid-bg); border-radius: 8px; padding: 8px; 
+            display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); 
+            gap: 4px; box-sizing: border-box; position: relative; 
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5); touch-action: none; overflow: hidden;
+            contain: layout paint; 
+        }
+        .grid-bg-layer { position: absolute; top: 8px; left: 8px; right: 8px; bottom: 8px; display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); gap: 4px; z-index: 0; pointer-events: none; }
+        .grid-slot { background-color: var(--empty-tile); border-radius: 4px; width: 100%; height: 100%; }
+
+        .grid-flash { animation: gridFlash 0.1s ease-out; }
+        @keyframes gridFlash { 0% { box-shadow: inset 0 0 0 0 rgba(255,255,255,0); } 50% { box-shadow: inset 0 0 50px 10px rgba(255,255,255,0.2); } 100% { box-shadow: inset 0 0 0 0 rgba(255,255,255,0); } }
+
+        .tile { grid-row-start: var(--row); grid-column-start: var(--col); grid-row-end: span 1; grid-column-end: span 1; border-radius: 4px; display: flex; justify-content: center; align-items: center; font-weight: bold; color: var(--text-dark); cursor: pointer; box-shadow: 0 2px 2px rgba(0,0,0,0.2); z-index: 5; will-change: transform; animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards; }
+        @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .tile.merged { animation: pulse 0.2s ease-in-out; z-index: 10; }
+        @keyframes pulse { 0% { transform: scale(1) rotate(0deg); filter: brightness(1); } 50% { transform: scale(1.2) rotate(5deg); filter: brightness(2) saturate(2); box-shadow: 0 0 25px var(--fx-cyan); } 100% { transform: scale(1) rotate(0deg); filter: brightness(1); } }
+        .tile.selected { border: 2px solid var(--fx-pink); box-shadow: 0 0 15px var(--fx-pink); z-index: 20; transform: scale(0.95) !important; }
+
+        /* VFX & Debris */
+        .particle { position: absolute; width: 8px; height: 8px; border-radius: 50%; pointer-events: none; z-index: 100; mix-blend-mode: screen; opacity: 0; }
+        .debris { 
+            position: fixed; /* FIXED para sair do overflow:hidden do grid */
+            pointer-events: none; z-index: 9999; 
+            box-shadow: 0 0 20px currentColor; 
+            opacity: 0; 
         }
 
-        .score-title {
-            font-size: 10px;
-            text-transform: uppercase;
-            display: block;
-            color: #80deea;
+        /* Animações JS */
+        @keyframes particleAnim { 0% { transform: translate(0, 0) scale(1); opacity: 1; } 100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; } }
+        @keyframes debrisAnim { 
+            0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; } 
+            20% { transform: translate(var(--dx-start), -150px) rotate(180deg) scale(1.8); opacity: 1; } 
+            100% { transform: translate(var(--dx-end), 120vh) rotate(1440deg) scale(0.5); opacity: 0.5; } 
         }
 
-        /* CONTROL BUTTONS */
-        .controls-row {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-            width: 100%;
-            margin-top: 15px;
-            flex-wrap: wrap;
-        }
-
-        .btn-control,
-        .btn-link {
-            border: none;
-            padding: 10px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: bold;
-            color: white;
-            transition: all 0.2s;
-            box-shadow: 0 3px 0 rgba(0, 0, 0, 0.3);
-            flex: 1;
-            text-transform: uppercase;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            font-family: inherit;
-        }
-
-        .btn-control:active,
-        .btn-link:active {
-            transform: translateY(3px);
-            box-shadow: none;
-        }
-
-        .btn-restart {
-            background: #455a64;
-        }
-
-        .btn-restart:hover {
-            background: #546e7a;
-        }
-
-        .btn-fx {
-            background: #78909c;
-        }
-
-        .btn-fx.active {
-            background: #ef6c00;
-        }
-
-        .btn-mode {
-            background: #00838f;
-            border: 1px solid #00acc1;
-        }
-
-        .btn-mode:hover {
-            background: #00acc1;
-        }
-
-        .btn-chaos {
-            background: #4a148c;
-            border: 1px solid #7c4dff;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-chaos:hover {
-            background: var(--chaos-bg);
-        }
-
-        .btn-chaos.active {
-            background: var(--chaos-bg);
-            box-shadow: 0 0 25px #d500f9;
-            animation: chaosPulse 0.2s infinite alternate;
-            color: #fff;
-            border-color: #fff;
-        }
-
-        @keyframes chaosPulse {
-            from {
-                transform: scale(1);
-            }
-
-            to {
-                transform: scale(1.05);
-            }
-        }
-
-        #status-msg {
-            height: 20px;
-            font-size: 14px;
-            font-weight: bold;
-            color: var(--text-main);
-            margin-bottom: 5px;
-            text-align: center;
-            opacity: 0.8;
-        }
-
-        /* COMBO UI */
-        .combo-panel {
-            width: 60px;
-            height: 550px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
-            margin: 0 5px;
-            position: relative;
-            transition: opacity 0.3s;
-        }
-
-        @media (max-width: 850px) {
-            .combo-panel {
-                width: 100%;
-                height: 40px;
-                flex-direction: row;
-                order: 3;
-                margin-top: 10px;
-            }
-
-            .combo-bar-container {
-                width: 100% !important;
-                height: 12px !important;
-            }
-
-            .combo-bar-fill {
-                width: 0%;
-                height: 100% !important;
-            }
-        }
-
-        .combo-display {
-            font-family: 'Courier New', monospace;
-            font-weight: 900;
-            font-size: 24px;
-            color: var(--text-main);
-            text-align: center;
-            margin-bottom: 10px;
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
-            min-height: 30px;
-            z-index: 10;
-        }
-
-        .combo-bar-container {
-            width: 20px;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            overflow: hidden;
-            position: relative;
-            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .combo-bar-fill {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 0%;
-            background: linear-gradient(45deg, #ff00ff, #ff1744, #ff9100, #ff00ff);
-            background-size: 400% 400%;
-            animation: magmaFlow 2s ease infinite;
-            box-shadow: 0 0 20px currentColor;
-            transition: height 0.1s linear;
-        }
-
-        @keyframes magmaFlow {
-            0% {
-                background-position: 0% 50%;
-            }
-
-            50% {
-                background-position: 100% 50%;
-            }
-
-            100% {
-                background-position: 0% 50%;
-            }
-        }
-
-        /* GRID 8x8 */
-        #grid-container {
-            width: 85vmin;
-            height: 85vmin;
-            max-width: 550px;
-            max-height: 550px;
-            background-color: var(--grid-bg);
-            border-radius: 8px;
-            padding: 8px;
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            grid-template-rows: repeat(8, 1fr);
-            gap: 4px;
-            box-sizing: border-box;
-            position: relative;
-            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
-            touch-action: none;
-            overflow: hidden;
-        }
-
-        .grid-bg-layer {
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            right: 8px;
-            bottom: 8px;
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            grid-template-rows: repeat(8, 1fr);
-            gap: 4px;
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        .grid-slot {
-            background-color: var(--empty-tile);
-            border-radius: 4px;
-            width: 100%;
-            height: 100%;
-        }
-
-        .tile {
-            grid-row-start: var(--row);
-            grid-column-start: var(--col);
-            grid-row-end: span 1;
-            grid-column-end: span 1;
-            border-radius: 4px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-weight: bold;
-            color: var(--text-dark);
-            cursor: pointer;
-            box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
-            z-index: 5;
-            will-change: transform;
-            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
-        }
-
-        @keyframes popIn {
-            0% {
-                transform: scale(0);
-                opacity: 0;
-            }
-
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        .tile.merged {
-            animation: pulse 0.2s ease-in-out;
-            z-index: 10;
-        }
-
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-                filter: brightness(1);
-            }
-
-            50% {
-                transform: scale(1.15);
-                filter: brightness(1.5);
-                box-shadow: 0 0 15px var(--fx-lime);
-            }
-
-            100% {
-                transform: scale(1);
-                filter: brightness(1);
-            }
-        }
-
-        .tile.selected {
-            border: 2px solid var(--fx-pink);
-            box-shadow: 0 0 15px var(--fx-pink);
-            z-index: 20;
-            transform: scale(0.95) !important;
-        }
-
-        /* VFX */
-        .particle {
-            position: absolute;
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 100;
-            animation: particle-anim 0.6s forwards ease-out;
-        }
-
-        @keyframes particle-anim {
-            0% {
-                transform: translate(0, 0) scale(1);
-                opacity: 1;
-            }
-
-            100% {
-                transform: translate(var(--tx), var(--ty)) scale(0);
-                opacity: 0;
-            }
-        }
-
-        .debris {
-            position: fixed;
-            pointer-events: none;
-            z-index: 9999;
-            box-shadow: 0 0 15px currentColor;
-            animation: explodeFall 0.8s cubic-bezier(0.5, 0, 1, 1) forwards;
-        }
-
-        @keyframes explodeFall {
-            0% {
-                transform: translate(0, 0) rotate(0deg) scale(1);
-                opacity: 1;
-            }
-
-            15% {
-                transform: translate(var(--dx-start), -60px) rotate(120deg) scale(1.5);
-                opacity: 1;
-            }
-
-            100% {
-                transform: translate(var(--dx-end), 110vh) rotate(1080deg) scale(0.5);
-                opacity: 0.8;
-            }
-        }
-
-        /* SHAKE */
-        .shake-light {
-            animation: shake-light 0.2s ease-in-out infinite;
-        }
-
-        .shake-med {
-            animation: shake-med 0.15s ease-in-out infinite;
-        }
-
-        .shake-hard {
-            animation: shake-hard 0.1s ease-in-out infinite;
-        }
-
-        @keyframes shake-light {
-            0% {
-                transform: translate(0.5px, 0.5px);
-            }
-
-            50% {
-                transform: translate(-0.5px, -0.5px);
-            }
-
-            100% {
-                transform: translate(0.5px, -0.5px);
-            }
-        }
-
-        @keyframes shake-med {
-            0% {
-                transform: translate(-1px, -1px);
-            }
-
-            50% {
-                transform: translate(1px, 1px);
-            }
-
-            100% {
-                transform: translate(-1px, 1px);
-            }
-        }
-
-        @keyframes shake-hard {
-            0% {
-                transform: translate(-2px, -2px);
-            }
-
-            25% {
-                transform: translate(2px, 2px);
-            }
-
-            50% {
-                transform: translate(-2px, 2px);
-            }
-
-            75% {
-                transform: translate(2px, -2px);
-            }
-
-            100% {
-                transform: translate(0, 0);
-            }
-        }
+        /* Shake Effects */
+        .shake-light { animation: shake-light 0.2s infinite; }
+        .shake-med { animation: shake-med 0.15s infinite; }
+        .shake-hard { animation: shake-hard 0.1s infinite; }
+        .shake-chaos { animation: shake-hard 0.05s infinite; filter: chromatic-aberration(2px); }
+        @keyframes shake-light { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -1px); } 100% { transform: translate(1px, -1px); } }
+        @keyframes shake-med { 0% { transform: translate(-2px, -2px); } 50% { transform: translate(2px, 2px); } 100% { transform: translate(-2px, 2px); } }
+        @keyframes shake-hard { 0% { transform: translate(-4px, -4px) rotate(-1deg); } 50% { transform: translate(4px, 4px) rotate(1deg); } 100% { transform: translate(0, 0); } }
 
         /* COLORS */
-        .tile[data-val="2"] {
-            background: #e0f7fa;
-            color: #263238;
+        .tile[data-val="2"]    { background: #e0f7fa; color: #263238; }
+        .tile[data-val="4"]    { background: #b2ebf2; color: #263238; }
+        .tile[data-val="8"]    { background: #80deea; color: #263238; }
+        .tile[data-val="16"]   { background: #4dd0e1; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .tile[data-val="32"]   { background: #26c6da; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .tile[data-val="64"]   { background: #00bcd4; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .tile[data-val="128"]  { background: #039be5; color: #fff; font-size: 24px; box-shadow: 0 0 10px #039be5; }
+        .tile[data-val="256"]  { background: #0288d1; color: #fff; font-size: 24px; box-shadow: 0 0 15px #0288d1; }
+        .tile[data-val="512"]  { background: #0277bd; color: #fff; font-size: 24px; box-shadow: 0 0 20px #0277bd; }
+        .tile[data-val="1024"] { background: #3949ab; color: #fff; font-size: 20px; box-shadow: 0 0 25px #3949ab; }
+        .tile[data-val="2048"] { background: #5e35b1; color: #fff; font-size: 20px; box-shadow: 0 0 30px #7c4dff; }
+        .tile[data-val="4096"] { background: #8e24aa; color: #fff; font-size: 18px; box-shadow: 0 0 35px #e040fb; }
+        .tile[data-val="8192"] { background: #ad1457; color: #fff; font-size: 18px; box-shadow: 0 0 40px #ff4081; }
+        .tile.high-tier { background: #000; color: #00e5ff; font-size: 12px; border: 1px solid #00e5ff; box-shadow: inset 0 0 15px var(--fx-cyan), 0 0 20px var(--fx-cyan); text-shadow: 0 0 5px #fff; }
+
+        .sidebar { background: var(--sidebar-bg); width: 240px; padding: 20px; border-radius: 8px; display: flex; flex-direction: column; gap: 0; box-shadow: 5px 5px 15px rgba(0,0,0,0.4); border-top: 3px solid #37474f; }
+        #security-panel { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
+        .security-screen { background: var(--screen-bg); color: var(--screen-text); font-family: "Courier New", monospace; padding: 10px; border-radius: 4px; text-align: right; font-size: 18px; height: 35px; display: flex; align-items: center; justify-content: flex-end; border: 1px solid #444; box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.1); letter-spacing: 2px; }
+        .keypad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .key-btn { background: var(--keypad-btn); color: #cfd8dc; font-size: 18px; padding: 15px 0; border-radius: 4px; text-align: center; font-family: monospace; transition: background 0.1s; box-shadow: none; }
+        .key-btn:hover { background: var(--keypad-btn-hover); }
+        .key-btn:active { background: #00bcd4; color: #000; transform: translateY(2px); }
+        .bottom-bar { display: flex; gap: 6px; margin-top: 6px; }
+        .btn-zero { flex: 1; background: var(--keypad-btn); }
+        .btn-enter { flex: 2; background: #b71c1c; font-size: 14px; font-weight: bold; color: #fff; }
+        #god-panel { display: none; flex-direction: column; gap: 12px; background: #263238; padding: 10px; border-radius: 5px; border: 1px solid #00e5ff; animation: slideDown 0.5s; margin-top: 15px; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .god-label { color: #80deea; font-size: 12px; margin-bottom: 2px; text-transform: uppercase;}
+        select { width: 100%; padding: 8px; background: #37474f; border: 1px solid #546e7a; color: #fff; border-radius: 3px; }
+        .swap-toggle { background: #455a64; width: 100%; text-align: left; position: relative; padding-left: 40px; }
+        .swap-toggle::before { content: ''; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; border-radius: 50%; background: #cfd8dc; box-shadow: 0 0 5px #cfd8dc; }
+        .swap-toggle.active { background: #2e3b40; border: 1px solid #00c853; color: #00c853;}
+        .swap-toggle.active::before { background: #00c853; box-shadow: 0 0 8px #00c853; }
+
+        .game-over-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 18, 18, 0.95); z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--screen-text); animation: fadeIn 0.5s ease-in-out; backdrop-filter: blur(4px); }
+        .game-over-overlay h2 { font-size: 40px; margin: 0 0 10px 0; text-shadow: 0 0 10px var(--screen-text); font-family: "Courier New", monospace; color: #ff1744; }
+        .game-over-overlay button { background-color: var(--powerup-active); box-shadow: 0 0 15px var(--powerup-active); font-size: 18px; padding: 12px 24px; border:none; color:white; border-radius:4px; font-weight:bold; cursor:pointer; margin-top: 20px; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .actions-row { display: flex; gap: 6px; width: 100%; margin-bottom: 15px; }
+        .btn-reroll-action { flex: 1; background: var(--reroll-bg); color: #fff; border: none; border-radius: 6px; padding: 12px 0; font-size: 14px; font-weight: bold; font-family: monospace; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; box-shadow: 0 3px 0 rgba(0,0,0,0.3); transition: all 0.1s ease; }
+        .btn-reroll-action:hover { background: var(--reroll-hover); }
+        .btn-reroll-action:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.3); }
+        .btn-reroll-action svg { width: 18px; height: 18px; fill: currentColor; }
+        
+        .btn-shot { flex: 1; background: var(--shot-bg); color: #fff; border: none; border-radius: 6px; padding: 12px 0; font-size: 14px; font-weight: bold; font-family: monospace; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; box-shadow: 0 3px 0 rgba(0,0,0,0.3); transition: all 0.1s ease; }
+        .btn-shot:hover { background: var(--shot-hover); }
+        .btn-shot:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.3); }
+        .btn-shot svg { width: 18px; height: 18px; fill: currentColor; }
+
+        /* HIDDEN DEBUG BUTTON */
+        .debug-trigger {
+            position: fixed; bottom: 0; right: 0; width: 30px; height: 30px; z-index: 9999; cursor: pointer; opacity: 0; /* Invisible */
         }
 
-        .tile[data-val="4"] {
-            background: #b2ebf2;
-            color: #263238;
-        }
-
-        .tile[data-val="8"] {
-            background: #80deea;
-            color: #263238;
-        }
-
-        .tile[data-val="16"] {
-            background: #4dd0e1;
-            color: #fff;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-        }
-
-        .tile[data-val="32"] {
-            background: #26c6da;
-            color: #fff;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-        }
-
-        .tile[data-val="64"] {
-            background: #00bcd4;
-            color: #fff;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-        }
-
-        .tile[data-val="128"] {
-            background: #039be5;
-            color: #fff;
-            font-size: 24px;
-        }
-
-        .tile[data-val="256"] {
-            background: #0288d1;
-            color: #fff;
-            font-size: 24px;
-        }
-
-        .tile[data-val="512"] {
-            background: #0277bd;
-            color: #fff;
-            font-size: 24px;
-            box-shadow: 0 0 10px rgba(2, 119, 189, 0.6);
-        }
-
-        .tile[data-val="1024"] {
-            background: #3949ab;
-            color: #fff;
-            font-size: 20px;
-            box-shadow: 0 0 15px rgba(57, 73, 171, 0.6);
-        }
-
-        .tile[data-val="2048"] {
-            background: #5e35b1;
-            color: #fff;
-            font-size: 20px;
-            box-shadow: 0 0 20px #7c4dff;
-        }
-
-        .tile[data-val="4096"] {
-            background: #8e24aa;
-            color: #fff;
-            font-size: 18px;
-            box-shadow: 0 0 20px #e040fb;
-        }
-
-        .tile[data-val="8192"] {
-            background: #ad1457;
-            color: #fff;
-            font-size: 18px;
-            box-shadow: 0 0 20px #ff4081;
-        }
-
-        .tile.high-tier {
-            background: #000;
-            color: #00e5ff;
-            font-size: 12px;
-            border: 1px solid #00e5ff;
-            box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.3), 0 0 10px #00e5ff;
-            text-shadow: 0 0 5px #00e5ff;
-        }
-
-        /* SIDEBAR */
-        .sidebar {
-            background: var(--sidebar-bg);
-            width: 240px;
-            padding: 20px;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            gap: 0;
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.4);
-            border-top: 3px solid #37474f;
-        }
-
-        #security-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .security-screen {
-            background: var(--screen-bg);
-            color: var(--screen-text);
-            font-family: "Courier New", monospace;
-            padding: 10px;
-            border-radius: 4px;
-            text-align: right;
-            font-size: 18px;
-            height: 35px;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            border: 1px solid #444;
-            box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.1);
-            letter-spacing: 2px;
-        }
-
-        .keypad-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-        }
-
-        .key-btn {
-            background: var(--keypad-btn);
-            color: #cfd8dc;
-            font-size: 18px;
-            padding: 15px 0;
-            border-radius: 4px;
-            text-align: center;
-            font-family: monospace;
-            transition: background 0.1s;
-            box-shadow: none;
-        }
-
-        .key-btn:hover {
-            background: var(--keypad-btn-hover);
-        }
-
-        .key-btn:active {
-            background: #00bcd4;
-            color: #000;
-            transform: translateY(2px);
-        }
-
-        .bottom-bar {
-            display: flex;
-            gap: 6px;
-            margin-top: 6px;
-        }
-
-        .btn-zero {
-            flex: 1;
-            background: var(--keypad-btn);
-        }
-
-        .btn-enter {
-            flex: 2;
-            background: #b71c1c;
-            font-size: 14px;
-            font-weight: bold;
-            color: #fff;
-        }
-
-        #god-panel {
-            display: none;
-            flex-direction: column;
-            gap: 12px;
-            background: #263238;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #00e5ff;
-            animation: slideDown 0.5s;
-            margin-top: 15px;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .god-label {
-            color: #80deea;
-            font-size: 12px;
-            margin-bottom: 2px;
-            text-transform: uppercase;
-        }
-
-        select {
-            width: 100%;
-            padding: 8px;
-            background: #37474f;
-            border: 1px solid #546e7a;
-            color: #fff;
-            border-radius: 3px;
-        }
-
-        .swap-toggle {
-            background: #455a64;
-            width: 100%;
-            text-align: left;
-            position: relative;
-            padding-left: 40px;
-        }
-
-        .swap-toggle::before {
-            content: '';
-            position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #cfd8dc;
-            box-shadow: 0 0 5px #cfd8dc;
-        }
-
-        .swap-toggle.active {
-            background: #2e3b40;
-            border: 1px solid #00c853;
-            color: #00c853;
-        }
-
-        .swap-toggle.active::before {
-            background: #00c853;
-            box-shadow: 0 0 8px #00c853;
-        }
-
-        /* GAME OVER */
-        .game-over-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(18, 18, 18, 0.95);
-            z-index: 100;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            color: var(--screen-text);
-            animation: fadeIn 0.5s ease-in-out;
-            backdrop-filter: blur(4px);
-        }
-
-        .game-over-overlay h2 {
-            font-size: 40px;
-            margin: 0 0 10px 0;
-            text-shadow: 0 0 10px var(--screen-text);
-            font-family: "Courier New", monospace;
-            color: #ff1744;
-        }
-
-        .game-over-overlay button {
-            background-color: var(--powerup-active);
-            box-shadow: 0 0 15px var(--powerup-active);
-            font-size: 18px;
-            padding: 12px 24px;
-            border: none;
-            color: white;
-            border-radius: 4px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
-        .btn-reroll-action {
-            width: 100%;
-            background: var(--reroll-bg);
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            padding: 15px 0;
-            font-size: 16px;
-            font-weight: bold;
-            font-family: monospace;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
-            transition: all 0.1s ease;
-        }
-
-        .btn-reroll-action:hover {
-            background: var(--reroll-hover);
-        }
-
-        .btn-reroll-action:active {
-            transform: translateY(2px);
-            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
-        }
-
-        .btn-reroll-action svg {
-            width: 22px;
-            height: 22px;
-            fill: currentColor;
-        }
     </style>
 </head>
-
 <body>
 
-    <div class="game-wrapper" id="main-wrapper">
-        <div class="game-column">
-            <div class="header">
-                <div>
-                    <h1>Ultra 2048</h1>
-                    <div style="font-size: 12px; color: #546e7a;">Grid 8x8 | 8x8 Edition</div>
-                </div>
-                <div class="score-container">
-                    <span class="score-title">Score</span>
-                    <span id="score">0</span>
-                </div>
+<div class="debug-trigger" onclick="forceGameOver()"></div>
+
+<div class="game-wrapper" id="main-wrapper">
+    <div class="game-column">
+        <div class="header">
+            <div>
+                <h1>Ultra 2048</h1>
+                <div style="font-size: 12px; color: #546e7a;">Grid 8x8 | 8x8 FIXED</div>
             </div>
-
-            <div id="status-msg"></div>
-
-            <div id="grid-container">
-                <div class="grid-bg-layer" id="grid-bg-layer"></div>
-
-                <div id="game-over-overlay" class="game-over-overlay">
-                    <h2>SYSTEM FAILURE</h2>
-                    <p>No Moves Possible</p>
-                    <p style="font-size: 14px; color: #b0bec5; margin-top:5px;">Final Score: <span id="final-score"
-                            style="color:white; font-weight:bold;">0</span></p>
-                    <button onclick="initGame()">SYSTEM REBOOT</button>
-                </div>
-            </div>
-
-            <div class="controls-row">
-                <button class="btn-control btn-restart" onclick="initGame()">Restart</button>
-                <button id="btn-fx" class="btn-control btn-fx" onclick="toggleFX()">FX: OFF</button>
-                <button id="btn-chaos" class="btn-control btn-chaos" onclick="toggleChaotic()">CHAOS</button>
-                <a href="game-4x4.html" class="btn-link btn-mode">Go to 4x4</a>
-            </div>
-
-            <div style="margin-top: 15px; text-align: center; width: 100%;">
-                <p style="font-size: 12px; color: var(--text-main); margin-top: 5px; opacity: 0.7;">Access Hint: The
-                    order of everything (1 to 9) ends in the void's pair.</p>
+            <div class="score-container">
+                <span class="score-title">Score</span>
+                <span id="score">0</span>
             </div>
         </div>
 
-        <div class="combo-panel" id="combo-panel" style="opacity: 0;">
-            <div id="combo-display" class="combo-display">0</div>
-            <div class="combo-bar-container">
-                <div id="combo-bar-fill" class="combo-bar-fill"></div>
+        <div id="status-msg"></div>
+
+        <div id="grid-container">
+            <div class="grid-bg-layer" id="grid-bg-layer"></div>
+            
+            <div id="game-over-overlay" class="game-over-overlay">
+                <h2>SYSTEM FAILURE</h2>
+                <p>No Moves Possible</p>
+                <p style="font-size: 14px; color: #b0bec5; margin-top:5px;">Final Score: <span id="final-score" style="color:white; font-weight:bold;">0</span></p>
+                <button onclick="initGame()">SYSTEM REBOOT</button>
             </div>
         </div>
-
-        <div class="sidebar">
-            <div id="security-panel">
-                <div class="security-screen" id="display-screen">LOCKED</div>
-                <div class="keypad-grid">
-                    <button class="key-btn" onclick="pressKey('1')">1</button>
-                    <button class="key-btn" onclick="pressKey('2')">2</button>
-                    <button class="key-btn" onclick="pressKey('3')">3</button>
-                    <button class="key-btn" onclick="pressKey('4')">4</button>
-                    <button class="key-btn" onclick="pressKey('5')">5</button>
-                    <button class="key-btn" onclick="pressKey('6')">6</button>
-                    <button class="key-btn" onclick="pressKey('7')">7</button>
-                    <button class="key-btn" onclick="pressKey('8')">8</button>
-                    <button class="key-btn" onclick="pressKey('9')">9</button>
-                </div>
-                <div class="bottom-bar">
-                    <button class="key-btn btn-zero" onclick="pressKey('0')">0</button>
-                    <button class="key-btn btn-enter" id="btn-enter" onclick="checkPassword()">ENTER</button>
-                </div>
-            </div>
-
-            <button class="btn-reroll-action" onclick="rerollBoard()" title="Reroll (Shuffle)">
-                <svg viewBox="0 0 24 24">
-                    <path
-                        d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z" />
-                </svg>
-                REROLL
-            </button>
-
-            <div id="god-panel">
-                <div
-                    style="text-align: center; color: #00e5ff; font-weight: bold; border-bottom: 1px solid #00e5ff; padding-bottom:5px;">
-                    SYSTEM OVERRIDE</div>
-                <div>
-                    <div class="god-label">Generate Matter</div>
-                    <select id="god-select" onchange="enableGodPlacement()">
-                        <option value="0">-- Select Value --</option>
-                        <option value="0">Delete Tile (0)</option>
-                    </select>
-                </div>
-                <div>
-                    <div class="god-label">Manipulate Space</div>
-                    <button id="btn-swap-toggle" class="swap-toggle" onclick="toggleSwapMode()">Activate Swap</button>
-                </div>
-                <div style="font-size: 10px; color: #b0bec5; text-align: center; margin-top:5px;" id="god-instruction">
-                    Panel Active.</div>
-                <button style="background: #b71c1c; font-size: 10px; padding: 5px;" onclick="lockGodMode()">LOCK
-                    SYSTEM</button>
-            </div>
+        
+        <div class="controls-row">
+            <button class="btn-control btn-restart" onclick="initGame()">Restart</button>
+            <button id="btn-fx" class="btn-control btn-fx" onclick="toggleFX()">FX: OFF</button>
+            <button id="btn-chaos" class="btn-control btn-chaos" onclick="toggleChaotic()">CHAOS</button>
+            <a href="game-4x4.html" class="btn-link btn-mode">Go to 4x4</a>
+        </div>
+        
+        <div style="margin-top: 15px; text-align: center; width: 100%;">
+            <p style="font-size: 12px; color: var(--text-main); margin-top: 5px; opacity: 0.7;">Access Hint: The order of everything (1 to 9) ends in the void's pair.</p>
         </div>
     </div>
 
-    <script>
-        const gridSize = 8;
-        let board = [];
-        let score = 0;
-        let nextTileId = 1;
+    <div class="combo-panel" id="combo-panel" style="opacity: 0;">
+        <div id="combo-display" class="combo-display">0</div>
+        <div class="combo-bar-container">
+            <div id="combo-bar-fill" class="combo-bar-fill"></div>
+        </div>
+    </div>
 
-        let isSwapMode = false;
-        let swapSelection = null;
-        let isGodModeUnlocked = false;
-        let godPlacementValue = 0;
-        let inputBuffer = "";
-        const SECRET_CODE = "12345678900";
+    <div class="sidebar">
+        <div id="security-panel">
+            <div class="security-screen" id="display-screen">LOCKED</div>
+            <div class="keypad-grid">
+                <button class="key-btn" onclick="pressKey('1')">1</button>
+                <button class="key-btn" onclick="pressKey('2')">2</button>
+                <button class="key-btn" onclick="pressKey('3')">3</button>
+                <button class="key-btn" onclick="pressKey('4')">4</button>
+                <button class="key-btn" onclick="pressKey('5')">5</button>
+                <button class="key-btn" onclick="pressKey('6')">6</button>
+                <button class="key-btn" onclick="pressKey('7')">7</button>
+                <button class="key-btn" onclick="pressKey('8')">8</button>
+                <button class="key-btn" onclick="pressKey('9')">9</button>
+            </div>
+            <div class="bottom-bar">
+                <button class="key-btn btn-zero" onclick="pressKey('0')">0</button>
+                <button class="key-btn btn-enter" id="btn-enter" onclick="checkPassword()">ENTER</button>
+            </div>
+        </div>
+        
+        <div class="actions-row">
+            <button class="btn-reroll-action" onclick="rerollBoard()" title="Reroll (Shuffle)">
+                <svg viewBox="0 0 24 24">
+                    <path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/>
+                </svg>
+                REROLL
+            </button>
+            <button id="btn-shot" class="btn-shot" onclick="shotMacro()" title="SHOT (30 Random Moves + Destroy 6)" style="display: none;">
+                <svg viewBox="0 0 24 24">
+                    <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
+                </svg>
+                SHOT
+            </button>
+        </div>
 
-        // FX & Combo
-        let comboScore = 0;
-        let comboEndTime = 0;
-        let lastMergeTime = Date.now();
-        let comboRequestFrame = null;
-        let currentIntensity = 0;
-        let isFxEnabled = false;
+        <div id="god-panel">
+            <div style="text-align: center; color: #00e5ff; font-weight: bold; border-bottom: 1px solid #00e5ff; padding-bottom:5px;">SYSTEM OVERRIDE</div>
+            <div>
+                <div class="god-label">Generate Matter</div>
+                <select id="god-select" onchange="enableGodPlacement()">
+                    <option value="0">-- Select Value --</option>
+                    <option value="0">Delete Tile (0)</option>
+                </select>
+            </div>
+            <div>
+                <div class="god-label">Manipulate Space</div>
+                <button id="btn-swap-toggle" class="swap-toggle" onclick="toggleSwapMode()">Activate Swap</button>
+            </div>
+            <div style="font-size: 10px; color: #b0bec5; text-align: center; margin-top:5px;" id="god-instruction">Panel Active.</div>
+            <button style="background: #b71c1c; font-size: 10px; padding: 5px;" onclick="lockGodMode()">LOCK SYSTEM</button>
+        </div>
+    </div>
+</div>
 
-        // Chaotic Mode
-        let isChaoticMode = false;
-        let chaoticInterval = null;
+<script>
+    const gridSize = 8;
+    let board = [];
+    let score = 0;
+    let nextTileId = 1;
 
-        const tileColors = ['#e0f7fa', '#b2ebf2', '#80deea', '#4dd0e1', '#26c6da', '#00bcd4', '#039be5', '#0288d1', '#0277bd', '#3949ab', '#5e35b1', '#8e24aa', '#ad1457'];
+    let isSwapMode = false;
+    let swapSelection = null;
+    let isGodModeUnlocked = false;
+    let godPlacementValue = 0; 
+    let inputBuffer = "";
+    const SECRET_CODE = "12345678900";
+    const SHOT_CODE = "2048";
 
-        function createGridBg() {
-            const layer = document.getElementById('grid-bg-layer');
-            layer.innerHTML = '';
-            for (let i = 0; i < gridSize * gridSize; i++) {
-                let div = document.createElement('div');
-                div.className = 'grid-slot';
-                layer.appendChild(div);
-            }
+    // FX & Combo
+    let comboScore = 0;
+    let comboEndTime = 0;
+    let lastMergeTime = Date.now();
+    let comboRequestFrame = null;
+    let currentIntensity = 0;
+    let isFxEnabled = false;
+
+    // Chaotic Mode
+    let isChaoticMode = false;
+    let chaoticInterval = null;
+    let isProcessingMacro = false;
+
+    const tileColors = ['#e0f7fa', '#b2ebf2', '#80deea', '#4dd0e1', '#26c6da', '#00bcd4', '#039be5', '#0288d1', '#0277bd', '#3949ab', '#5e35b1', '#8e24aa', '#ad1457'];
+
+    // --- OBJECT POOLING SYSTEM ---
+    const particlePool = [];
+    const debrisPool = [];
+
+    function getEntity(pool, className) {
+        let el = null;
+        if(pool.length > 0) {
+            el = pool.pop();
+            el.style.display = 'block';
+            el.style.animation = 'none';
+            void el.offsetWidth; // Force Reflow
+        } else {
+            el = document.createElement('div');
+            el.className = className;
         }
-        createGridBg();
+        return el;
+    }
 
-        function initGame() {
-            document.getElementById('game-over-overlay').style.display = 'none';
+    function recycleEntity(el, pool) {
+        el.style.display = 'none';
+        pool.push(el);
+    }
 
-            if (!isFxEnabled) {
-                document.body.style.backgroundColor = 'var(--bg-color)';
-                document.body.classList.remove('dark-mode');
-            }
+    function createGridBg() {
+        const layer = document.getElementById('grid-bg-layer');
+        layer.innerHTML = '';
+        for(let i=0; i<gridSize*gridSize; i++) {
+            let div = document.createElement('div');
+            div.className = 'grid-slot';
+            layer.appendChild(div);
+        }
+    }
+    createGridBg();
 
-            board = Array(gridSize).fill().map(() => Array(gridSize).fill(null));
-            score = 0;
-            comboScore = 0;
-            comboEndTime = 0;
-            currentIntensity = 0;
-            updateComboUI();
+    function initGame() {
+        document.getElementById('game-over-overlay').style.display = 'none';
+        isProcessingMacro = false;
+        
+        if(!isFxEnabled) {
+            document.body.style.backgroundColor = 'var(--bg-color)';
+            document.body.classList.remove('dark-mode');
+            document.body.classList.remove('glitch-mode');
+        }
+        
+        board = Array(gridSize).fill().map(() => Array(gridSize).fill(null));
+        score = 0;
+        comboScore = 0;
+        comboEndTime = 0;
+        currentIntensity = 0;
+        updateComboUI();
 
-            isChaoticMode = false;
-            if (chaoticInterval) clearInterval(chaoticInterval);
-            document.getElementById('btn-chaos').classList.remove('active');
+        isChaoticMode = false;
+        if(chaoticInterval) clearInterval(chaoticInterval);
+        document.getElementById('btn-chaos').classList.remove('active');
 
-            const container = document.getElementById('grid-container');
-            const tiles = container.querySelectorAll('.tile');
-            tiles.forEach(t => t.remove());
-            document.querySelectorAll('.particle, .debris').forEach(p => p.remove());
+        const container = document.getElementById('grid-container');
+        const tiles = container.querySelectorAll('.tile');
+        tiles.forEach(t => t.remove());
+        
+        const activeParticles = document.querySelectorAll('.particle, .debris');
+        activeParticles.forEach(p => p.style.display = 'none');
 
-            resetModes();
-            addNewTile();
+        resetModes();
+        addNewTile();
+        addNewTile();
+        drawBoard();
+        updateScore();
+        document.getElementById('status-msg').innerText = "";
+        
+        if(comboRequestFrame) cancelAnimationFrame(comboRequestFrame);
+        updateComboLoop();
+    }
+
+    // --- FORCE GAME OVER (DEBUG) ---
+    function forceGameOver() {
+        document.getElementById('final-score').innerText = score;
+        document.getElementById('game-over-overlay').style.display = 'flex';
+        isProcessingMacro = false;
+        if(chaoticInterval) clearInterval(chaoticInterval);
+    }
+
+    // --- SHOT MACRO FIXED ---
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    async function shotMacro() {
+        if (isProcessingMacro || checkGameOver()) return;
+        isProcessingMacro = true;
+        
+        for(let i=0; i<15; i++) {
+            if(checkGameOver()) { forceGameOver(); return; }
+            rerollBoard();
+            await sleep(60); 
+        }
+
+        for(let i=0; i<30; i++) {
+            if(checkGameOver()) { forceGameOver(); return; }
+            let dir = Math.floor(Math.random() * 4); 
+            await executeMove(dir);
+            await sleep(80); 
+        }
+
+        destroyLowestTiles(6);
+        isProcessingMacro = false;
+    }
+
+    async function executeMove(dir) {
+        let moved = false;
+        if (dir === 3) moved = moveLeft();
+        else if (dir === 1) { rotateBoard(); rotateBoard(); moved = moveLeft(); rotateBoard(); rotateBoard(); }
+        else if (dir === 0) { rotateBoardBack(); moved = moveLeft(); rotateBoard(); }
+        else if (dir === 2) { rotateBoard(); moved = moveLeft(); rotateBoardBack(); }
+
+        if (moved) {
             addNewTile();
             drawBoard();
             updateScore();
-            document.getElementById('status-msg').innerText = "";
-
-            if (comboRequestFrame) cancelAnimationFrame(comboRequestFrame);
-            updateComboLoop();
-        }
-
-        function toggleChaotic() {
-            isChaoticMode = !isChaoticMode;
-            const btn = document.getElementById('btn-chaos');
-            if (isChaoticMode) {
-                btn.classList.add('active');
-                chaoticInterval = setInterval(destroyLeastActiveTile, 2000);
-            } else {
-                btn.classList.remove('active');
-                clearInterval(chaoticInterval);
+            if(isFxEnabled) triggerScreenFlash(); 
+            if(checkGameOver()) {
+                forceGameOver();
             }
         }
+    }
 
-        function destroyLeastActiveTile() {
-            if (!isChaoticMode) return;
-            let maxStatic = -1;
-            let target = null;
-            let targetPos = null;
-            for (let r = 0; r < gridSize; r++) {
-                for (let c = 0; c < gridSize; c++) {
-                    if (board[r][c] !== null) {
-                        if (board[r][c].staticCount > maxStatic) {
-                            maxStatic = board[r][c].staticCount;
-                            target = board[r][c];
-                            targetPos = { r, c };
-                        }
+    function triggerScreenFlash() {
+        const grid = document.getElementById('grid-container');
+        grid.classList.add('grid-flash');
+        setTimeout(() => grid.classList.remove('grid-flash'), 100);
+    }
+
+    function destroyLowestTiles(amount) {
+        let activeTiles = [];
+        for(let r=0; r<gridSize; r++) {
+            for(let c=0; c<gridSize; c++) {
+                if(board[r][c] !== null) activeTiles.push({r,c, val: board[r][c].val});
+            }
+        }
+        activeTiles.sort((a,b) => a.val - b.val);
+        
+        let count = 0;
+        for(let t of activeTiles) {
+            if(count >= amount) break;
+            spawnDebris(t.r, t.c, t.val, true); 
+            board[t.r][t.c] = null;
+            count++;
+        }
+        drawBoard();
+        if(checkGameOver()) forceGameOver();
+    }
+
+    // --- CHAOTIC MODE ---
+    function toggleChaotic() {
+        isChaoticMode = !isChaoticMode;
+        const btn = document.getElementById('btn-chaos');
+        if(isChaoticMode) {
+            btn.classList.add('active');
+            chaoticInterval = setInterval(destroyLeastActiveTile, 2000);
+        } else {
+            btn.classList.remove('active');
+            clearInterval(chaoticInterval);
+        }
+    }
+
+    function destroyLeastActiveTile() {
+        if(!isChaoticMode) return;
+        let maxStatic = -1;
+        let target = null;
+        let targetPos = null;
+        for(let r=0; r<gridSize; r++) {
+            for(let c=0; c<gridSize; c++) {
+                if(board[r][c] !== null) {
+                    if(board[r][c].staticCount > maxStatic) {
+                        maxStatic = board[r][c].staticCount;
+                        target = board[r][c];
+                        targetPos = {r,c};
                     }
                 }
             }
-            if (target && targetPos) {
-                spawnDebris(targetPos.r, targetPos.c, target.val, true);
-                board[targetPos.r][targetPos.c] = null;
-                drawBoard();
-                if (checkGameOver()) {
-                    document.getElementById('final-score').innerText = score;
-                    document.getElementById('game-over-overlay').style.display = 'flex';
-                    toggleChaotic();
-                }
-            }
         }
-
-        function spawnDebris(r, c, val, force = false) {
-            if (!isFxEnabled && !force && !isChaoticMode) return;
-            const container = document.body;
-            const rectGrid = document.getElementById('grid-container').getBoundingClientRect();
-            const cellW = (rectGrid.width - 16) / gridSize;
-            const cellH = (rectGrid.height - 16) / gridSize;
-            const startX = rectGrid.left + 8 + (c * cellW) + (cellW / 2);
-            const startY = rectGrid.top + 8 + (r * cellH) + (cellH / 2);
-            const colorIdx = Math.max(0, Math.min(Math.floor(Math.log2(val)) - 1, tileColors.length - 1));
-            const color = tileColors[colorIdx] || '#fff';
-            for (let i = 0; i < 12; i++) {
-                const deb = document.createElement('div');
-                deb.className = 'debris';
-                deb.style.backgroundColor = color;
-                deb.style.left = startX + 'px';
-                deb.style.top = startY + 'px';
-                const size = 10 + Math.random() * 15;
-                deb.style.width = size + 'px';
-                deb.style.height = size + 'px';
-                deb.style.color = color;
-                const dxStart = (Math.random() - 0.5) * 100 + 'px';
-                const dxEnd = (Math.random() - 0.5) * 400 + 'px';
-                deb.style.setProperty('--dx-start', dxStart);
-                deb.style.setProperty('--dx-end', dxEnd);
-                container.appendChild(deb);
-                setTimeout(() => deb.remove(), 1000);
-            }
-        }
-
-        function toggleFX() {
-            isFxEnabled = !isFxEnabled;
-            const btn = document.getElementById('btn-fx');
-            const panel = document.getElementById('combo-panel');
-            const wrapper = document.querySelector('.game-wrapper');
-            if (isFxEnabled) {
-                btn.innerHTML = "FX: ON";
-                btn.classList.add('active');
-                panel.style.opacity = "1";
-            } else {
-                btn.innerHTML = "FX: OFF";
-                btn.classList.remove('active');
-                panel.style.opacity = "0";
-                document.body.style.backgroundColor = 'var(--bg-color)';
-                document.body.classList.remove('dark-mode');
-                wrapper.className = "game-wrapper";
-            }
-        }
-
-        function updateComboLoop() {
-            const now = Date.now();
-            const timeLeft = Math.max(0, comboEndTime - now);
-
-            if (!isFxEnabled) {
-                if (timeLeft <= 0 && comboScore > 0) comboScore = 0;
-                comboRequestFrame = requestAnimationFrame(updateComboLoop);
-                return;
-            }
-
-            const barFill = document.getElementById('combo-bar-fill');
-            const percentage = (timeLeft / 4000);
-            barFill.style.height = (percentage * 100) + '%';
-
-            let scoreFactor = Math.min(comboScore / 3000, 1);
-            let targetIntensity = scoreFactor * percentage;
-
-            if (targetIntensity < currentIntensity) document.body.style.transition = 'background-color 3s ease, color 3s ease';
-            else document.body.style.transition = 'background-color 0.2s ease-out, color 0.2s ease-out';
-
-            currentIntensity = targetIntensity;
-
-            if (currentIntensity > 0.05) {
-                updateBackgroundIntensity(currentIntensity);
-                if (currentIntensity > 0.4) document.body.classList.add('dark-mode');
-                else document.body.classList.remove('dark-mode');
-            } else {
-                document.body.style.backgroundColor = 'var(--bg-color)';
-                document.body.classList.remove('dark-mode');
-            }
-
-            if (timeLeft <= 0 && comboScore > 0) {
-                comboScore = 0;
-                updateComboUI();
-            }
-            comboRequestFrame = requestAnimationFrame(updateComboLoop);
-        }
-
-        function updateBackgroundIntensity(factor) {
-            const r = Math.floor(227 + (43 - 227) * factor);
-            const g = Math.floor(241 + (0 - 241) * factor);
-            const b = Math.floor(240 + (0 - 240) * factor);
-            document.body.style.backgroundColor = `rgb(${r},${g},${b})`;
-        }
-
-        function addCombo(scoreAdded, mergeCount) {
-            if (mergeCount === 0) return;
-            const now = Date.now();
-            let timeDiff = (now - lastMergeTime) / 1000;
-            if (timeDiff < 0.1) timeDiff = 0.1;
-            const comboValue = (scoreAdded + mergeCount) / timeDiff;
-            comboScore += Math.floor(comboValue);
-            comboEndTime = now + 4000;
-            lastMergeTime = now;
-            updateComboUI();
-        }
-
-        function updateComboUI() {
-            const display = document.getElementById('combo-display');
-            const wrapper = document.querySelector('.game-wrapper');
-
-            if (comboScore > 0) {
-                display.innerText = comboScore.toLocaleString();
-                const randColor = tileColors[Math.floor(Math.random() * tileColors.length)];
-                display.style.color = randColor;
-                if (isFxEnabled) {
-                    wrapper.className = "game-wrapper";
-                    if (comboScore > 5000) wrapper.classList.add('shake-hard');
-                    else if (comboScore > 1000) wrapper.classList.add('shake-med');
-                    else if (comboScore > 200) wrapper.classList.add('shake-light');
-                }
-            } else {
-                display.innerText = "0";
-                display.style.color = "var(--text-main)";
-                wrapper.className = "game-wrapper";
-            }
-        }
-
-        document.getElementById('grid-container').addEventListener('click', function (e) {
-            if (!isGodModeUnlocked) return;
-            const rect = this.getBoundingClientRect();
-            const x = e.clientX - rect.left - 8;
-            const y = e.clientY - rect.top - 8;
-            const cellW = (rect.width - 16) / gridSize;
-            const cellH = (rect.height - 16) / gridSize;
-            const c = Math.floor(x / cellW);
-            const r = Math.floor(y / cellH);
-            if (r >= 0 && r < gridSize && c >= 0 && c < gridSize) handleTileClick(r, c);
-        });
-
-        function spawnParticles(r, c, type) {
-            if (!isFxEnabled && !isChaoticMode) return;
-            const container = document.getElementById('grid-container');
-            const rect = container.getBoundingClientRect();
-            const cellW = (rect.width - 16) / gridSize;
-            const cellH = (rect.height - 16) / gridSize;
-            const startX = 8 + (c * cellW) + (cellW / 2);
-            const startY = 8 + (r * cellH) + (cellH / 2);
-            let colors = [], count = 0;
-            if (type === 'merge') { colors = ['var(--fx-pink)', 'var(--fx-orange)', 'var(--fx-lime)', '#00e5ff']; count = isChaoticMode ? 36 : 12; }
-            else if (type === 'spawn') { colors = ['var(--fx-spawn)', '#ffffff']; count = 6; }
-            for (let i = 0; i < count; i++) {
-                const p = document.createElement('div');
-                p.className = 'particle';
-                p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                p.style.left = startX + 'px';
-                p.style.top = startY + 'px';
-                const angle = Math.random() * Math.PI * 2;
-                const dist = (25 + Math.random() * 30) * (isChaoticMode ? 2 : 1);
-                const tx = Math.cos(angle) * dist;
-                const ty = Math.sin(angle) * dist;
-                p.style.setProperty('--tx', `${tx}px`);
-                p.style.setProperty('--ty', `${ty}px`);
-                container.appendChild(p);
-                setTimeout(() => p.remove(), 600);
-            }
-        }
-
-        function addNewTile() {
-            let emptyTiles = [];
-            for (let r = 0; r < gridSize; r++) {
-                for (let c = 0; c < gridSize; c++) { if (board[r][c] === null) emptyTiles.push({ r, c }); }
-            }
-            if (emptyTiles.length > 0) {
-                let rand = emptyTiles[Math.floor(Math.random() * emptyTiles.length)];
-                board[rand.r][rand.c] = { val: Math.random() < 0.9 ? 2 : 4, id: nextTileId++, staticCount: 0 };
-                setTimeout(() => spawnParticles(rand.r, rand.c, 'spawn'), 50);
-            }
-        }
-
-        function rerollBoard() {
-            let currentTiles = [];
-            for (let r = 0; r < gridSize; r++) {
-                for (let c = 0; c < gridSize; c++) {
-                    if (board[r][c] !== null) { currentTiles.push(board[r][c]); board[r][c] = null; }
-                }
-            }
-            if (currentTiles.length === 0) return;
-            let allPositions = [];
-            for (let r = 0; r < gridSize; r++) for (let c = 0; c < gridSize; c++) allPositions.push({ r, c });
-            for (let i = allPositions.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [allPositions[i], allPositions[j]] = [allPositions[j], allPositions[i]];
-            }
-            currentTiles.forEach((tile, index) => {
-                let pos = allPositions[index];
-                board[pos.r][pos.c] = tile;
-            });
+        if(target && targetPos) {
+            spawnDebris(targetPos.r, targetPos.c, target.val, true);
+            board[targetPos.r][targetPos.c] = null;
             drawBoard();
-        }
-
-        function slide(row) {
-            let arr = row.filter(t => t !== null);
-            let missing = gridSize - arr.length;
-            let zeros = Array(missing).fill(null);
-            return arr.concat(zeros);
-        }
-
-        function combine(row) {
-            let scoreAdded = 0; let mergeCount = 0;
-            for (let i = 0; i < gridSize - 1; i++) {
-                if (row[i] !== null && row[i + 1] !== null && row[i].val === row[i + 1].val) {
-                    row[i] = { val: row[i].val * 2, id: nextTileId++, merged: true, staticCount: 0 };
-                    row[i + 1] = null;
-                    let s = row[i].val;
-                    score += s;
-                    scoreAdded += s;
-                    mergeCount++;
-                    row[i].triggerVFX = true;
-                }
+            if(checkGameOver()) {
+                forceGameOver();
+                toggleChaotic();
             }
-            return { row, scoreAdded, mergeCount };
+        }
+    }
+
+    // --- OTIMIZAÇÃO: SPAWN LIMPO COM POOLING ---
+    function spawnDebris(r, c, val, force = false) {
+        if(!isFxEnabled && !force && !isChaoticMode) return;
+        
+        const container = document.body; 
+        const rectGrid = document.getElementById('grid-container').getBoundingClientRect(); 
+        
+        const cellW = (rectGrid.width - 16) / gridSize;
+        const cellH = (rectGrid.height - 16) / gridSize;
+        const startX = rectGrid.left + 8 + (c * cellW) + (cellW / 2);
+        const startY = rectGrid.top + 8 + (r * cellH) + (cellH / 2);
+
+        const colorIdx = Math.max(0, Math.min(Math.floor(Math.log2(val)) - 1, tileColors.length - 1));
+        const color = tileColors[colorIdx] || '#fff';
+        
+        const fragment = document.createDocumentFragment();
+
+        for(let i=0; i<15; i++) {
+            const deb = getEntity(debrisPool, 'debris'); // POOLING
+            deb.style.animation = 'debrisAnim 0.6s cubic-bezier(0.5, 0, 1, 1) forwards';
+            deb.style.backgroundColor = color;
+            deb.style.left = startX + 'px';
+            deb.style.top = startY + 'px';
+            deb.style.color = color; 
+
+            const dxStart = (Math.random() - 0.5) * 150 + 'px';
+            const dxEnd = (Math.random() - 0.5) * 600 + 'px';
+            deb.style.setProperty('--dx-start', dxStart);
+            deb.style.setProperty('--dx-end', dxEnd);
+            
+            fragment.appendChild(deb);
+            setTimeout(() => recycleEntity(deb, debrisPool), 600); 
+        }
+        container.appendChild(fragment);
+    }
+
+    // --- SPAWN PARTICLES OPTIMIZED ---
+    function spawnParticles(r, c, type) {
+        if(!isFxEnabled && !isChaoticMode) return;
+        
+        const container = document.getElementById('grid-container');
+        const rect = container.getBoundingClientRect(); 
+        const cellW = (rect.width - 16) / gridSize;
+        const cellH = (rect.height - 16) / gridSize;
+        const startX = 8 + (c * cellW) + (cellW / 2);
+        const startY = 8 + (r * cellH) + (cellH / 2);
+
+        let colors = [], count = 0;
+        if (type === 'merge') { 
+            colors = ['var(--fx-pink)', 'var(--fx-orange)', 'var(--fx-lime)', '#00e5ff']; 
+            count = isChaoticMode ? 30 : 12;
+        } else if (type === 'spawn') { colors = ['var(--fx-spawn)', '#ffffff']; count = 6; }
+
+        const fragment = document.createDocumentFragment();
+
+        for(let i=0; i<count; i++) {
+            const p = getEntity(particlePool, 'particle'); // POOLING
+            p.style.animation = 'particleAnim 0.6s forwards ease-out';
+            p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            p.style.left = startX + 'px';
+            p.style.top = startY + 'px';
+            const angle = Math.random() * Math.PI * 2;
+            const dist = (25 + Math.random() * 30) * (isChaoticMode ? 2.5 : 1);
+            const tx = Math.cos(angle) * dist;
+            const ty = Math.sin(angle) * dist;
+            p.style.setProperty('--tx', `${tx}px`);
+            p.style.setProperty('--ty', `${ty}px`);
+            fragment.appendChild(p);
+            setTimeout(() => recycleEntity(p, particlePool), 600); 
+        }
+        container.appendChild(fragment);
+    }
+
+    // --- TOGGLE FX ---
+    function toggleFX() {
+        isFxEnabled = !isFxEnabled;
+        const btn = document.getElementById('btn-fx');
+        const panel = document.getElementById('combo-panel');
+        const wrapper = document.querySelector('.game-wrapper');
+        if(isFxEnabled) {
+            btn.innerHTML = "FX: ON";
+            btn.classList.add('active');
+            panel.style.opacity = "1";
+        } else {
+            btn.innerHTML = "FX: OFF";
+            btn.classList.remove('active');
+            panel.style.opacity = "0";
+            document.body.style.backgroundColor = 'var(--bg-color)';
+            document.body.classList.remove('dark-mode');
+            document.body.classList.remove('glitch-mode');
+            wrapper.className = "game-wrapper"; 
+        }
+    }
+
+    // --- COMBO & INTENSITY ---
+    function updateComboLoop() {
+        const now = Date.now();
+        const timeLeft = Math.max(0, comboEndTime - now);
+        
+        if(!isFxEnabled) {
+            if (timeLeft <= 0 && comboScore > 0) comboScore = 0;
+            comboRequestFrame = requestAnimationFrame(updateComboLoop);
+            return;
         }
 
-        function moveLeft() {
-            for (let r = 0; r < gridSize; r++)
-                for (let c = 0; c < gridSize; c++)
-                    if (board[r][c]) board[r][c].staticCount++;
-            let moved = false;
-            let totalScore = 0; let totalMerge = 0;
-            for (let r = 0; r < gridSize; r++) {
-                let oldIds = board[r].map(t => t ? t.id : 'x').join(',');
-                let row = slide(board[r]);
-                let res = combine(row);
-                row = res.row;
-                totalScore += res.scoreAdded; totalMerge += res.mergeCount;
-                row = slide(row);
-                board[r] = row;
-                let newIds = board[r].map(t => t ? t.id : 'x').join(',');
-                if (oldIds !== newIds) {
-                    moved = true;
-                    board[r].forEach(t => { if (t) t.staticCount = 0; });
-                }
+        const barFill = document.getElementById('combo-bar-fill');
+        const percentage = (timeLeft / 4000); 
+        barFill.style.height = (percentage * 100) + '%';
+        
+        let scoreFactor = Math.min(Math.log10(comboScore + 1) / 4, 1.2); 
+        let targetIntensity = scoreFactor * percentage;
+        
+        if (targetIntensity < currentIntensity) document.body.style.transition = 'background-color 3s ease, color 3s ease';
+        else document.body.style.transition = 'background-color 0.1s ease-out, color 0.1s ease-out';
+        
+        currentIntensity = targetIntensity;
+
+        if(currentIntensity > 0.05) {
+            updateBackgroundIntensity(currentIntensity);
+            if(currentIntensity > 0.4) document.body.classList.add('dark-mode');
+            else document.body.classList.remove('dark-mode');
+            
+            if(currentIntensity > 0.8) document.body.classList.add('glitch-mode');
+            else document.body.classList.remove('glitch-mode');
+
+        } else {
+            document.body.style.backgroundColor = 'var(--bg-color)';
+            document.body.classList.remove('dark-mode');
+            document.body.classList.remove('glitch-mode');
+        }
+
+        if (timeLeft <= 0 && comboScore > 0) {
+            comboScore = 0;
+            updateComboUI(); 
+        }
+        comboRequestFrame = requestAnimationFrame(updateComboLoop);
+    }
+
+    function updateBackgroundIntensity(factor) {
+        if (factor > 1.0) {
+            const hue = (Date.now() / 20) % 360;
+            document.body.style.backgroundColor = `hsl(${hue}, 60%, 10%)`;
+            return;
+        }
+        const r = Math.floor(227 + (43 - 227) * factor);
+        const g = Math.floor(241 + (0 - 241) * factor);
+        const b = Math.floor(240 + (0 - 240) * factor);
+        document.body.style.backgroundColor = `rgb(${r},${g},${b})`;
+    }
+
+    function addCombo(scoreAdded, mergeCount) {
+        if(mergeCount === 0) return;
+        const now = Date.now();
+        let timeDiff = (now - lastMergeTime) / 1000; 
+        if (timeDiff < 0.1) timeDiff = 0.1;
+        const comboValue = (scoreAdded + mergeCount) / timeDiff;
+        comboScore += Math.floor(comboValue);
+        comboEndTime = now + 4000;
+        lastMergeTime = now;
+        updateComboUI();
+    }
+
+    function updateComboUI() {
+        const display = document.getElementById('combo-display');
+        const wrapper = document.querySelector('.game-wrapper');
+        
+        if(comboScore > 0) {
+            display.innerText = comboScore.toLocaleString();
+            const randColor = tileColors[Math.floor(Math.random() * tileColors.length)];
+            display.style.color = randColor;
+            if(isFxEnabled) {
+                wrapper.className = "game-wrapper"; 
+                if(comboScore > 8000) wrapper.classList.add('shake-chaos');
+                else if(comboScore > 3000) wrapper.classList.add('shake-hard');
+                else if(comboScore > 1000) wrapper.classList.add('shake-med');
+                else if(comboScore > 200) wrapper.classList.add('shake-light');
             }
-            if (totalMerge > 0) addCombo(totalScore, totalMerge);
-            return moved;
+        } else {
+            display.innerText = "0"; 
+            display.style.color = "var(--text-main)";
+            wrapper.className = "game-wrapper";
         }
+    }
 
-        function rotateBoard() {
-            let newBoard = board[0].map((val, index) => board.map(row => row[index]).reverse());
-            board = newBoard;
+    document.getElementById('grid-container').addEventListener('click', function(e) {
+        if(!isGodModeUnlocked) return;
+        const rect = this.getBoundingClientRect();
+        const x = e.clientX - rect.left - 8;
+        const y = e.clientY - rect.top - 8;
+        const cellW = (rect.width - 16) / gridSize;
+        const cellH = (rect.height - 16) / gridSize;
+        const c = Math.floor(x / cellW);
+        const r = Math.floor(y / cellH);
+        if(r >= 0 && r < gridSize && c >= 0 && c < gridSize) handleTileClick(r, c);
+    });
+
+    function addNewTile() {
+        let emptyTiles = [];
+        for(let r=0; r<gridSize; r++){
+            for(let c=0; c<gridSize; c++){ if(board[r][c] === null) emptyTiles.push({r, c}); }
         }
-        function rotateBoardBack() {
-            let newBoard = board[0].map((val, index) => board.map(row => row[row.length - 1 - index]));
-            board = newBoard;
+        if(emptyTiles.length > 0){
+            let rand = emptyTiles[Math.floor(Math.random() * emptyTiles.length)];
+            board[rand.r][rand.c] = { val: Math.random() < 0.9 ? 2 : 4, id: nextTileId++, staticCount: 0 };
+            setTimeout(() => spawnParticles(rand.r, rand.c, 'spawn'), 50);
         }
+    }
 
-        function drawBoard() {
-            const container = document.getElementById('grid-container');
-            const existingTiles = {};
-            const oldRects = {};
-            container.querySelectorAll('.tile').forEach(el => {
-                const id = el.getAttribute('data-id');
-                existingTiles[id] = el;
-                oldRects[id] = el.getBoundingClientRect();
-            });
-            const activeIds = new Set();
+    function rerollBoard() {
+        let currentTiles = [];
+        for(let r=0; r<gridSize; r++) {
+            for(let c=0; c<gridSize; c++) {
+                if(board[r][c] !== null) { currentTiles.push(board[r][c]); board[r][c] = null; }
+            }
+        }
+        if(currentTiles.length === 0) return;
+        let allPositions = [];
+        for(let r=0; r<gridSize; r++) for(let c=0; c<gridSize; c++) allPositions.push({r, c});
+        for (let i = allPositions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [allPositions[i], allPositions[j]] = [allPositions[j], allPositions[i]];
+        }
+        currentTiles.forEach((tile, index) => {
+            let pos = allPositions[index];
+            board[pos.r][pos.c] = tile;
+        });
+        drawBoard();
+    }
 
-            for (let r = 0; r < gridSize; r++) {
-                for (let c = 0; c < gridSize; c++) {
-                    let tileData = board[r][c];
-                    if (tileData !== null) {
-                        activeIds.add(tileData.id.toString());
-                        let el = existingTiles[tileData.id];
-                        if (!el) {
-                            el = document.createElement('div');
-                            el.className = 'tile';
-                            el.setAttribute('data-id', tileData.id);
-                            container.appendChild(el);
+    function slide(row) {
+        let arr = row.filter(t => t !== null);
+        let missing = gridSize - arr.length;
+        let zeros = Array(missing).fill(null);
+        return arr.concat(zeros);
+    }
+
+    function combine(row) {
+        let scoreAdded = 0; let mergeCount = 0;
+        for (let i = 0; i < gridSize - 1; i++) {
+            if (row[i] !== null && row[i+1] !== null && row[i].val === row[i+1].val) {
+                row[i] = { val: row[i].val * 2, id: nextTileId++, merged: true, staticCount: 0 };
+                row[i+1] = null;
+                let s = row[i].val;
+                score += s;
+                scoreAdded += s;
+                mergeCount++;
+                row[i].triggerVFX = true;
+            }
+        }
+        return { row, scoreAdded, mergeCount };
+    }
+
+    function moveLeft() {
+        for(let r=0; r<gridSize; r++) 
+            for(let c=0; c<gridSize; c++) 
+                if(board[r][c]) board[r][c].staticCount++;
+        let moved = false;
+        let totalScore = 0; let totalMerge = 0;
+        for (let r = 0; r < gridSize; r++) {
+            let oldIds = board[r].map(t => t ? t.id : 'x').join(',');
+            let row = slide(board[r]);
+            let res = combine(row);
+            row = res.row;
+            totalScore += res.scoreAdded; totalMerge += res.mergeCount;
+            row = slide(row);
+            board[r] = row;
+            let newIds = board[r].map(t => t ? t.id : 'x').join(',');
+            if(oldIds !== newIds) {
+                moved = true;
+                board[r].forEach(t => { if(t) t.staticCount = 0; });
+            }
+        }
+        if(totalMerge > 0) addCombo(totalScore, totalMerge);
+        return moved;
+    }
+
+    function rotateBoard() {
+        let newBoard = board[0].map((val, index) => board.map(row => row[index]).reverse());
+        board = newBoard;
+    }
+    function rotateBoardBack() {
+        let newBoard = board[0].map((val, index) => board.map(row => row[row.length-1-index]));
+        board = newBoard;
+    }
+
+    function drawBoard() {
+        const container = document.getElementById('grid-container');
+        const existingTiles = {};
+        const oldRects = {};
+        container.querySelectorAll('.tile').forEach(el => {
+            const id = el.getAttribute('data-id');
+            existingTiles[id] = el;
+            oldRects[id] = el.getBoundingClientRect();
+        });
+        const activeIds = new Set();
+
+        for(let r=0; r<gridSize; r++){
+            for(let c=0; c<gridSize; c++){
+                let tileData = board[r][c];
+                if (tileData !== null) {
+                    activeIds.add(tileData.id.toString());
+                    let el = existingTiles[tileData.id];
+                    if (!el) {
+                        el = document.createElement('div');
+                        el.className = 'tile';
+                        el.setAttribute('data-id', tileData.id);
+                        container.appendChild(el);
+                    }
+                    el.innerText = tileData.val;
+                    if(tileData.val > 10000) el.classList.add('high-tier');
+                    else el.setAttribute('data-val', tileData.val);
+                    if (tileData.val > 999999) el.style.fontSize = "10px";
+                    else if (tileData.val > 9999) el.style.fontSize = "14px";
+                    else el.style.fontSize = "18px";
+                    el.style.setProperty('--row', r + 1);
+                    el.style.setProperty('--col', c + 1);
+
+                    if(tileData.merged) {
+                        el.classList.add('merged');
+                        setTimeout(() => { if(el) el.classList.remove('merged'); }, 300);
+                        if(tileData.triggerVFX) {
+                            spawnParticles(r, c, 'merge');
+                            tileData.triggerVFX = false;
                         }
-                        el.innerText = tileData.val;
-                        if (tileData.val > 10000) el.classList.add('high-tier');
-                        else el.setAttribute('data-val', tileData.val);
-                        if (tileData.val > 999999) el.style.fontSize = "10px";
-                        else if (tileData.val > 9999) el.style.fontSize = "14px";
-                        else el.style.fontSize = "18px";
-                        el.style.setProperty('--row', r + 1);
-                        el.style.setProperty('--col', c + 1);
-
-                        if (tileData.merged) {
-                            el.classList.add('merged');
-                            setTimeout(() => { if (el) el.classList.remove('merged'); }, 300);
-                            if (tileData.triggerVFX) {
-                                spawnParticles(r, c, 'merge');
-                                tileData.triggerVFX = false;
-                            }
-                            tileData.merged = false;
-                        }
-                        if (swapSelection && swapSelection.r === r && swapSelection.c === c) el.classList.add('selected');
-                        else el.classList.remove('selected');
-                        el.onclick = null;
-                        el.style.cursor = isGodModeUnlocked ? "crosshair" : "default";
+                        tileData.merged = false;
                     }
+                    if (swapSelection && swapSelection.r === r && swapSelection.c === c) el.classList.add('selected');
+                    else el.classList.remove('selected');
+                    el.onclick = null;
+                    el.style.cursor = isGodModeUnlocked ? "crosshair" : "default";
                 }
             }
-            for (let id in existingTiles) { if (!activeIds.has(id)) existingTiles[id].remove(); }
+        }
+        for(let id in existingTiles) { if(!activeIds.has(id)) existingTiles[id].remove(); }
+        
+        activeIds.forEach(id => {
+            const el = existingTiles[id];
+            const oldRect = oldRects[id];
+            if (el && oldRect) {
+                const newRect = el.getBoundingClientRect();
+                const dx = oldRect.left - newRect.left;
+                const dy = oldRect.top - newRect.top;
+                if (dx !== 0 || dy !== 0) {
+                    el.style.transition = 'none';
+                    el.style.transform = `translate(${dx}px, ${dy}px)`;
+                    requestAnimationFrame(() => {
+                        el.style.transition = 'transform 0.15s ease-in-out';
+                        el.style.transform = '';
+                    });
+                }
+            }
+        });
+    }
 
-            activeIds.forEach(id => {
-                const el = existingTiles[id];
-                const oldRect = oldRects[id];
-                if (el && oldRect) {
-                    const newRect = el.getBoundingClientRect();
-                    const dx = oldRect.left - newRect.left;
-                    const dy = oldRect.top - newRect.top;
-                    if (dx !== 0 || dy !== 0) {
-                        el.style.transition = 'none';
-                        el.style.transform = `translate(${dx}px, ${dy}px)`;
-                        requestAnimationFrame(() => {
-                            el.style.transition = 'transform 0.15s ease-in-out';
-                            el.style.transform = '';
-                        });
-                    }
+    function checkGameOver() {
+        let count = 0;
+        let hasEmpty = false;
+        for(let r=0; r<gridSize; r++) {
+            for(let c=0; c<gridSize; c++) {
+                if(board[r][c] !== null) count++;
+                else hasEmpty = true;
+            }
+        }
+        if(count < 2) return true; // LOSE CONDITION FOR EMPTY BOARD
+        if(hasEmpty) return false;
+        for(let r=0; r<gridSize; r++) {
+            for(let c=0; c<gridSize; c++) {
+                if(c < gridSize - 1 && board[r][c].val === board[r][c+1].val) return false;
+                if(r < gridSize - 1 && board[r][c].val === board[r+1][c].val) return false;
+            }
+        }
+        return true;
+    }
+
+    function control(e) {
+        if(isSwapMode || isProcessingMacro) return;
+        if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.code) > -1) e.preventDefault();
+        let moved = false;
+        if (e.key === 'ArrowLeft') moved = moveLeft();
+        else if (e.key === 'ArrowRight') { rotateBoard(); rotateBoard(); moved = moveLeft(); rotateBoard(); rotateBoard(); } 
+        else if (e.key === 'ArrowUp') { rotateBoardBack(); moved = moveLeft(); rotateBoard(); } 
+        else if (e.key === 'ArrowDown') { rotateBoard(); moved = moveLeft(); rotateBoardBack(); }
+
+        if (moved) {
+            addNewTile();
+            requestAnimationFrame(() => {
+                drawBoard(); 
+                updateScore(); 
+                if(checkGameOver()) {
+                    forceGameOver();
                 }
             });
         }
+    }
 
-        function checkGameOver() {
-            let count = 0;
-            let hasEmpty = false;
-            for (let r = 0; r < gridSize; r++) {
-                for (let c = 0; c < gridSize; c++) {
-                    if (board[r][c] !== null) count++;
-                    else hasEmpty = true;
-                }
-            }
-            if (count < 2) return true;
-            if (hasEmpty) return false;
-            for (let r = 0; r < gridSize; r++) {
-                for (let c = 0; c < gridSize; c++) {
-                    if (c < gridSize - 1 && board[r][c].val === board[r][c + 1].val) return false;
-                    if (r < gridSize - 1 && board[r][c].val === board[r + 1][c].val) return false;
-                }
-            }
-            return true;
-        }
-
-        function control(e) {
-            if (isSwapMode) return;
-            if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].indexOf(e.code) > -1) e.preventDefault();
-            let moved = false;
-            if (e.key === 'ArrowLeft') moved = moveLeft();
-            else if (e.key === 'ArrowRight') { rotateBoard(); rotateBoard(); moved = moveLeft(); rotateBoard(); rotateBoard(); }
-            else if (e.key === 'ArrowUp') { rotateBoardBack(); moved = moveLeft(); rotateBoard(); }
-            else if (e.key === 'ArrowDown') { rotateBoard(); moved = moveLeft(); rotateBoardBack(); }
-
-            if (moved) {
-                addNewTile();
-                requestAnimationFrame(() => {
-                    drawBoard();
-                    updateScore();
-                    if (checkGameOver()) {
-                        document.getElementById('final-score').innerText = score;
-                        document.getElementById('game-over-overlay').style.display = 'flex';
-                    }
-                });
-            }
-        }
-
-        function handleTileClick(r, c) {
-            if (godPlacementValue !== 0 || (document.getElementById('god-select').selectedIndex === 1)) {
-                const currentCell = board[r][c];
-                if (godPlacementValue === 0) {
-                    if (currentCell !== null) { board[r][c] = null; drawBoard(); }
-                } else {
-                    if (currentCell === null) {
-                        board[r][c] = { val: godPlacementValue, id: nextTileId++, staticCount: 0 };
-                        spawnParticles(r, c, 'spawn'); drawBoard();
-                    }
-                }
-                if (checkGameOver()) {
-                    document.getElementById('final-score').innerText = score;
-                    document.getElementById('game-over-overlay').style.display = 'flex';
-                }
-                return;
-            }
-            if (isSwapMode) {
-                if (!swapSelection) { swapSelection = { r, c }; drawBoard(); }
-                else {
-                    let temp = board[swapSelection.r][swapSelection.c];
-                    board[swapSelection.r][swapSelection.c] = board[r][c];
-                    board[r][c] = temp;
-                    swapSelection = null; drawBoard();
-                    document.getElementById('status-msg').innerText = "Swap successful.";
-                }
-            }
-        }
-
-        function resetModes() {
-            isSwapMode = false; swapSelection = null; updateSwapUI();
-            godPlacementValue = 0;
-            if (isGodModeUnlocked) {
-                document.getElementById('god-select').value = "0";
-                document.getElementById('god-instruction').innerText = "System Waiting...";
-            }
-        }
-        function updateScore() { document.getElementById('score').innerText = score; }
-        function pressKey(key) { if (isGodModeUnlocked) return; if (inputBuffer.length < 15) { inputBuffer += key; updateDisplay(); } }
-        function updateDisplay() {
-            const screen = document.getElementById('display-screen');
-            screen.innerText = inputBuffer.length > 0 ? "•".repeat(inputBuffer.length) : "LOCKED";
-            screen.style.color = inputBuffer.length > 0 ? "#fff" : "#00e5ff";
-        }
-        function checkPassword() {
-            if (isGodModeUnlocked) return;
-            const screen = document.getElementById('display-screen');
-            const enterBtn = document.getElementById('btn-enter');
-            if (inputBuffer === SECRET_CODE) {
-                screen.innerText = "UNLOCKED"; screen.style.color = "#00c853"; enterBtn.style.background = "#00c853";
-                setTimeout(() => { unlockGodMode(); }, 600);
+    function handleTileClick(r, c) {
+        if (godPlacementValue !== 0 || (document.getElementById('god-select').selectedIndex === 1)) {
+            const currentCell = board[r][c];
+            if (godPlacementValue === 0) {
+                if(currentCell !== null) { board[r][c] = null; drawBoard(); }
             } else {
-                screen.innerText = "DENIED"; screen.style.color = "#ff1744"; inputBuffer = "";
-                setTimeout(() => { updateDisplay(); }, 1000);
+                if(currentCell === null) { 
+                    board[r][c] = { val: godPlacementValue, id: nextTileId++, staticCount: 0 }; 
+                    spawnParticles(r, c, 'spawn'); drawBoard(); 
+                }
+            }
+            if(checkGameOver()) {
+                forceGameOver();
+            }
+            return;
+        }
+        if (isSwapMode) {
+            if (!swapSelection) { swapSelection = {r, c}; drawBoard(); } 
+            else {
+                let temp = board[swapSelection.r][swapSelection.c];
+                board[swapSelection.r][swapSelection.c] = board[r][c];
+                board[r][c] = temp;
+                swapSelection = null; drawBoard();
+                document.getElementById('status-msg').innerText = "Swap successful.";
             }
         }
-        function unlockGodMode() {
-            isGodModeUnlocked = true;
-            document.getElementById('security-panel').style.display = 'none';
-            document.getElementById('god-panel').style.display = 'flex';
-            const select = document.getElementById('god-select');
-            while (select.options.length > 2) { select.remove(2); }
-            for (let i = 1; i <= 21; i++) {
-                let val = Math.pow(2, i);
-                let opt = document.createElement('option');
-                opt.value = val; opt.innerText = val.toLocaleString(); select.appendChild(opt);
-            }
-        }
-        function lockGodMode() {
-            isGodModeUnlocked = false; inputBuffer = "";
-            document.getElementById('security-panel').style.display = 'flex';
-            document.getElementById('god-panel').style.display = 'none';
-            document.getElementById('btn-enter').style.background = "#b71c1c";
-            updateDisplay(); resetModes();
-        }
-        function enableGodPlacement() {
-            if (isSwapMode) toggleSwapMode();
-            const val = parseInt(document.getElementById('god-select').value);
-            godPlacementValue = val;
-            const msg = document.getElementById('god-instruction');
-            const status = document.getElementById('status-msg');
-            if (val > 0) { msg.innerText = `CREATION MODE: Click EMPTY slot.`; status.innerText = `CREATE: Select empty slot`; }
-            else if (val === 0 && document.getElementById('god-select').selectedIndex > 0) { msg.innerText = `DELETE MODE: Click a TILE.`; status.innerText = `DELETE: Select existing tile`; }
-            else { msg.innerText = "Waiting for command..."; status.innerText = ""; }
-        }
-        function toggleSwapMode() {
-            if (godPlacementValue !== 0) { document.getElementById('god-select').value = "0"; godPlacementValue = 0; }
-            isSwapMode = !isSwapMode; swapSelection = null; updateSwapUI(); drawBoard();
-        }
-        function updateSwapUI() {
-            const btn = document.getElementById('btn-swap-toggle');
-            const status = document.getElementById('status-msg');
-            const instr = document.getElementById('god-instruction');
-            if (isSwapMode) {
-                btn.classList.add('active'); btn.innerHTML = "Swap Active (ON)";
-                status.innerText = "SWAP: Click tile 1 then tile 2"; instr.innerText = "Select two tiles on grid.";
-            } else {
-                btn.classList.remove('active'); btn.innerHTML = "Activate Swap";
-                if (godPlacementValue === 0) status.innerText = ""; instr.innerText = "System Waiting...";
-            }
-        }
+    }
 
-        document.addEventListener('keydown', control);
-        initGame();
-    </script>
+    function resetModes() {
+        isSwapMode = false; swapSelection = null; updateSwapUI();
+        godPlacementValue = 0;
+        if(isGodModeUnlocked) {
+            document.getElementById('god-select').value = "0";
+            document.getElementById('god-instruction').innerText = "System Waiting...";
+        }
+    }
+    function updateScore() { document.getElementById('score').innerText = score; }
+    function pressKey(key) { if(isGodModeUnlocked) return; if (inputBuffer.length < 15) { inputBuffer += key; updateDisplay(); } }
+    function updateDisplay() {
+        const screen = document.getElementById('display-screen');
+        screen.innerText = inputBuffer.length > 0 ? "•".repeat(inputBuffer.length) : "LOCKED";
+        screen.style.color = inputBuffer.length > 0 ? "#fff" : "#00e5ff";
+    }
+    function checkPassword() {
+        if(isGodModeUnlocked) return;
+        const screen = document.getElementById('display-screen');
+        const enterBtn = document.getElementById('btn-enter');
+        if (inputBuffer === SECRET_CODE) {
+            screen.innerText = "UNLOCKED"; screen.style.color = "#00c853"; enterBtn.style.background = "#00c853";
+            setTimeout(() => { unlockGodMode(); }, 600);
+        } else if (inputBuffer === SHOT_CODE) {
+            // UNLOCK SHOT MODE
+            screen.innerText = "SHOT ENABLED";
+            screen.style.color = "#00e676";
+            document.getElementById('btn-shot').style.display = 'flex'; // REVEAL BUTTON
+            setTimeout(() => { 
+                inputBuffer = ""; updateDisplay(); 
+                screen.style.color = "#00e5ff";
+            }, 1500);
+        } else {
+            screen.innerText = "DENIED"; screen.style.color = "#ff1744"; inputBuffer = "";
+            setTimeout(() => { updateDisplay(); }, 1000);
+        }
+    }
+    function unlockGodMode() {
+        isGodModeUnlocked = true;
+        document.getElementById('security-panel').style.display = 'none';
+        document.getElementById('god-panel').style.display = 'flex';
+        const select = document.getElementById('god-select');
+        while(select.options.length > 2) { select.remove(2); }
+        for(let i=1; i<=21; i++) {
+            let val = Math.pow(2, i);
+            let opt = document.createElement('option');
+            opt.value = val; opt.innerText = val.toLocaleString(); select.appendChild(opt);
+        }
+    }
+    function lockGodMode() {
+        isGodModeUnlocked = false; inputBuffer = "";
+        document.getElementById('security-panel').style.display = 'flex';
+        document.getElementById('god-panel').style.display = 'none';
+        document.getElementById('btn-enter').style.background = "#b71c1c";
+        updateDisplay(); resetModes();
+    }
+    function enableGodPlacement() {
+        if(isSwapMode) toggleSwapMode();
+        const val = parseInt(document.getElementById('god-select').value);
+        godPlacementValue = val;
+        const msg = document.getElementById('god-instruction');
+        const status = document.getElementById('status-msg');
+        if (val > 0) { msg.innerText = `CREATION MODE: Click EMPTY slot.`; status.innerText = `CREATE: Select empty slot`; } 
+        else if (val === 0 && document.getElementById('god-select').selectedIndex > 0) { msg.innerText = `DELETE MODE: Click a TILE.`; status.innerText = `DELETE: Select existing tile`; } 
+        else { msg.innerText = "Waiting for command..."; status.innerText = ""; }
+    }
+    function toggleSwapMode() {
+        if(godPlacementValue !== 0) { document.getElementById('god-select').value = "0"; godPlacementValue = 0; }
+        isSwapMode = !isSwapMode; swapSelection = null; updateSwapUI(); drawBoard();
+    }
+    function updateSwapUI() {
+        const btn = document.getElementById('btn-swap-toggle');
+        const status = document.getElementById('status-msg');
+        const instr = document.getElementById('god-instruction');
+        if(isSwapMode) {
+            btn.classList.add('active'); btn.innerHTML = "Swap Active (ON)";
+            status.innerText = "SWAP: Click tile 1 then tile 2"; instr.innerText = "Select two tiles on grid.";
+        } else {
+            btn.classList.remove('active'); btn.innerHTML = "Activate Swap";
+            if(godPlacementValue === 0) status.innerText = ""; instr.innerText = "System Waiting...";
+        }
+    }
+
+    document.addEventListener('keydown', control);
+    initGame();
+</script>
 </body>
-
 </html>
