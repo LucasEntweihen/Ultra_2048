@@ -1,12 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultra 2048 - System Select</title>
-    <style>
         body {
-            background-color: #212121; /* Fundo escuro do painel */
+            background-color: #212121;
+            /* Fundo escuro do painel */
             color: #e0f7fa;
             font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
             display: flex;
@@ -21,7 +15,8 @@
         h1 {
             font-size: 4rem;
             margin: 0 0 10px 0;
-            color: #00e5ff; /* Ciano Neon */
+            color: #00e5ff;
+            /* Ciano Neon */
             text-transform: uppercase;
             letter-spacing: -2px;
             text-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
@@ -84,11 +79,12 @@
             background: #37474f;
             color: #fff;
             border: 2px solid #546e7a;
-            box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
         }
+
         .btn-4x4:hover {
             border-color: #fff;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
         }
 
         /* Estilo Botão 8x8 */
@@ -96,8 +92,9 @@
             background: #006064;
             color: #00e5ff;
             border: 2px solid #00e5ff;
-            box-shadow: 0 0 15px rgba(0, 229, 255, 0.2), 0 4px 0 rgba(0,0,0,0.3);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.2), 0 4px 0 rgba(0, 0, 0, 0.3);
         }
+
         .btn-8x8:hover {
             background: #00838f;
             color: #fff;
@@ -111,26 +108,3 @@
             color: #546e7a;
             font-family: monospace;
         }
-    </style>
-</head>
-<body>
-
-    <h1>Ultra 2048</h1>
-    <p>// SELECT SYSTEM DIMENSION</p>
-
-    <div class="menu">
-        <a href="html/game-4x4.html" class="btn-card btn-4x4">
-            <div class="grid-icon">4x4</div>
-            <span class="label">Classic</span>
-        </a>
-
-        <a href="html/game-8x8.html" class="btn-card btn-8x8">
-            <div class="grid-icon">8x8</div>
-            <span class="label">Master</span>
-        </a>
-    </div>
-
-    <div class="footer">SYSTEM READY_</div>
-
-</body>
-</html>
