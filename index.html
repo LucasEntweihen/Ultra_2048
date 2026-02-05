@@ -5,12 +5,121 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
     <title>Ultra 2048 - System Select</title>
-    
+    <style>        body {
+        background-color: #212121;
+        /* Fundo escuro do painel */
+        color: #e0f7fa;
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        overflow: hidden;
+    }
+
+    h1 {
+        font-size: 4rem;
+        margin: 0 0 10px 0;
+        color: #00e5ff;
+        /* Ciano Neon */
+        text-transform: uppercase;
+        letter-spacing: -2px;
+        text-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+        font-weight: 800;
+    }
+
+    p {
+        color: #b0bec5;
+        margin-bottom: 50px;
+        font-family: "Courier New", monospace;
+        letter-spacing: 1px;
+        font-size: 14px;
+    }
+
+    .menu {
+        display: flex;
+        gap: 30px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .btn-card {
+        text-decoration: none;
+        width: 160px;
+        height: 160px;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        user-select: none;
+    }
+
+    .btn-card:hover {
+        transform: translateY(-8px) scale(1.05);
+        z-index: 10;
+    }
+
+    .btn-card:active {
+        transform: translateY(2px);
+    }
+
+    .grid-icon {
+        font-size: 3rem;
+        font-weight: 900;
+        margin-bottom: 5px;
+    }
+
+    .label {
+        font-size: 0.9rem;
+        font-weight: bold;
+        opacity: 0.8;
+        text-transform: uppercase;
+    }
+
+    /* Estilo Botão 4x4 */
+    .btn-4x4 {
+        background: #37474f;
+        color: #fff;
+        border: 2px solid #546e7a;
+        box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-4x4:hover {
+        border-color: #fff;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Estilo Botão 8x8 */
+    .btn-8x8 {
+        background: #006064;
+        color: #00e5ff;
+        border: 2px solid #00e5ff;
+        box-shadow: 0 0 15px rgba(0, 229, 255, 0.2), 0 4px 0 rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-8x8:hover {
+        background: #00838f;
+        color: #fff;
+        box-shadow: 0 0 40px rgba(0, 229, 255, 0.6);
+    }
+
+    .footer {
+        position: absolute;
+        bottom: 20px;
+        font-size: 10px;
+        color: #546e7a;
+        font-family: monospace;
+    }</style>
 </head>
 <body>
 
     <h1>Ultra 2048</h1>
-    <p>// SELECT SYSTEM DIMENSION</p>
+    <p>SELECT SYSTEM DIMENSION</p>
 
     <div class="menu">
         <a href="html/game-4x4.html" class="btn-card btn-4x4" target="_blank">
