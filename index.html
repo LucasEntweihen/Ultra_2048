@@ -921,6 +921,61 @@
             opacity: 0;
             /* Invisible */
         }
+
+
+        .btn-auto {
+            background: #2e7d32;
+            /* Verde escuro para o estado OFF */
+            border: 1px solid #4caf50;
+            /* Borda levemente mais clara */
+            transition: all 0.2s ease;
+            /* Transição suave para cores e sombras */
+        }
+
+        .btn-auto:hover {
+            background: #388e3c;
+            /* Realce ao passar o mouse */
+        }
+
+        .btn-auto.active {
+            background: #c62828;
+            /* Vermelho para indicar "Sistema Ativo" */
+            border-color: #ff5252;
+            /* Animação de pulsação para chamar atenção */
+            animation: pulseAuto 1.5s infinite;
+        }
+
+        @keyframes pulseAuto {
+            0% {
+                box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7), 0 3px 0 rgba(0, 0, 0, 0.3);
+            }
+
+            70% {
+                /* Cria a expansão do brilho ao redor do botão */
+                box-shadow: 0 0 0 15px rgba(76, 175, 80, 0), 0 3px 0 rgba(0, 0, 0, 0.3);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(76, 175, 80, 0), 0 3px 0 rgba(0, 0, 0, 0.3);
+            }
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            width: 100%;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            /* Permite que os botões pulem de linha se necessário */
+        }
+
+        .btn-control {
+            min-width: 85px;
+            /* Garante que o texto "AUTO: OFF" caiba sem espremer */
+            flex: 1;
+            /* Faz todos os botões terem o mesmo tamanho proporcional */
+        }
     </style>
     <div class="debug-trigger" onclick="forceGameOver()"></div>
 
@@ -955,15 +1010,18 @@
             <div class="controls-row">
                 <button class="btn-control btn-restart" onclick="initGame()">Restart</button>
                 <button id="btn-fx" class="btn-control btn-fx" onclick="toggleFX()">FX: OFF</button>
+                
+                <button id="btn-auto" class="btn-control btn-auto" onclick="toggleAutoPlay()">AUTO: OFF</button>
+                
                 <button id="btn-chaos" class="btn-control btn-chaos" onclick="toggleChaotic()">CHAOS</button>
                 <a href="game-4x4.html" class="btn-link btn-mode">Go to 4x4</a>
             </div>
 
             <div style="margin-top: 15px; text-align: center; width: 100%;">
                 <p style="font-size: 12px; color: var(--text-main); margin-top: 5px; opacity: 0.7;">Access Hint: The
-                    order of everything (1 to 9) ends in the void's pair.</p>
+                    order of everything (1 to 9) ends in the void's pair...</p>
                 <p style="font-size: 12px; color: var(--text-main); margin-top: 5px; opacity: 0.7;">Access Hint: game
-                    name.</p>
+                    name...</p>
             </div>
         </div>
 
@@ -1060,6 +1118,8 @@
         let isChaoticMode = false;
         let chaoticInterval = null;
         let isProcessingMacro = false;
+        let isAutoPlaying = false;
+        let autoPlayInterval = null;
 
         const tileColors = ['#e0f7fa', '#b2ebf2', '#80deea', '#4dd0e1', '#26c6da', '#00bcd4', '#039be5', '#0288d1', '#0277bd', '#3949ab', '#5e35b1', '#8e24aa', '#ad1457'];
 
@@ -1758,6 +1818,67 @@
         }
 
         document.addEventListener('keydown', control);
+
+        // --- AUTO PLAY LOGIC ---
+        function toggleAutoPlay() {
+            isAutoPlaying = !isAutoPlaying;
+            const btn = document.getElementById('btn-auto');
+            if (isAutoPlaying) {
+                btn.innerText = "AUTO: ON";
+                btn.classList.add('active');
+                // Inicia o ciclo de movimentos
+                autoPlayInterval = setInterval(runAutoPlay, 150);
+            } else {
+                btn.innerText = "AUTO: OFF";
+                btn.classList.remove('active');
+                clearInterval(autoPlayInterval);
+            }
+        }
+
+        function runAutoPlay() {
+            if (isProcessingMacro || checkGameOver()) return;
+
+            // Estratégia de prioridade: Baixo, Esquerda, Cima, Direita
+            // 1. Tentar mover para BAIXO
+            rotateBoard();
+            let moved = moveLeft();
+            rotateBoardBack();
+
+            if (!moved) {
+                // 2. Se não deu, tentar ESQUERDA
+                moved = moveLeft();
+            }
+
+            if (!moved) {
+                // 3. Se não deu, tentar CIMA
+                rotateBoardBack();
+                moved = moveLeft();
+                rotateBoard();
+            }
+
+            if (!moved) {
+                // 4. Último recurso: DIREITA
+                rotateBoard(); rotateBoard();
+                moved = moveLeft();
+                rotateBoard(); rotateBoard();
+            }
+
+            // Se houve movimento em qualquer direção, atualiza o jogo
+            if (moved) {
+                addNewTile();
+                drawBoard();
+                updateScore();
+                if (checkGameOver()) forceGameOver();
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp') move(0);
+            if (e.key === 'ArrowRight') move(1);
+            if (e.key === 'ArrowDown') move(2);
+            if (e.key === 'ArrowLeft') move(3);
+        });
+
         initGame();
     </script>
 </body>
